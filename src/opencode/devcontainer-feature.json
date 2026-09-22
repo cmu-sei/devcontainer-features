@@ -1,0 +1,17 @@
+{
+    "id": "opencode",
+    "version": "1.0.0",
+    "name": "OpenCode",
+    "description": "Installs the OpenCode CLI via the official installer script",
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ],
+    "postCreateCommand": "bash -l /usr/local/share/org-features/opencode/postcreate.sh",
+    "options": {
+        "version": {
+            "type": "string",
+            "default": "1.18.32",
+            "description": "Exact upstream tool version installed at image build time."
+        }
+    }
+}

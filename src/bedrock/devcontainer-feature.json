@@ -1,0 +1,10 @@
+{
+    "id": "bedrock",
+    "version": "1.0.0",
+    "name": "Amazon Bedrock account access",
+    "description": "Checks Amazon Bedrock account retention and GovCloud model availability without modifying account settings",
+    "dependsOn": {
+        "ghcr.io/devcontainers/features/aws-cli:1": {}
+    },
+    "postCreateCommand": "bash -l /usr/local/share/org-features/bedrock/postcreate.sh"
+}

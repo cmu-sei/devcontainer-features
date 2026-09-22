@@ -1,0 +1,30 @@
+{
+    "id": "claude",
+    "version": "1.0.0",
+    "name": "Claude Code",
+    "description": "Installs the Claude Code CLI via the official installer script",
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ],
+    "postCreateCommand": "bash -l /usr/local/share/org-features/claude/postcreate.sh",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "anthropic.claude-code"
+            ],
+            "settings": {
+                "chat.disableAIFeatures": true
+            }
+        }
+    },
+    "options": {
+        "version": {
+            "type": "string",
+            "default": "2.1.280",
+            "description": "Exact upstream tool version installed at image build time."
+        }
+    },
+    "containerEnv": {
+        "DISABLE_AUTOUPDATER": "1"
+    }
+}

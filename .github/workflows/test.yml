@@ -1,0 +1,52 @@
+name: Test features
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/validate.py
+      - name: Test installed lifecycle scripts without workspace feature sources
+        run: docker run --rm -v "$PWD:/repo:ro" mcr.microsoft.com/devcontainers/python:3.14-trixie bash /repo/tools/runtime-tests/runtime.sh
+  version-bump:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require a metadata version bump for every changed feature package
+        run: |
+          base="origin/${{ github.base_ref }}"
+          status=0
+          for dir in $(git diff --name-only "$base"...HEAD -- src | cut -d/ -f1-2 | sort -u); do
+            [ -f "$dir/devcontainer-feature.json" ] || continue
+            old=$(git show "$base:$dir/devcontainer-feature.json" 2>/dev/null | jq -r .version || true)
+            new=$(jq -r .version "$dir/devcontainer-feature.json")
+            if [ "$old" = "$new" ]; then
+              echo "::error::$dir changed but its version is still $new; published versions are never rebuilt."
+              status=1
+            fi
+          done
+          exit "$status"
+  feature:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: [bedrock, chat, claude, codex, grok, herdr, oh-my-logo, opencode, pi, pure-prompt, tmux]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install -g @devcontainers/cli@0.87.0
+      - name: Build and exercise feature on the organizational Python base
+        run: devcontainer features test --skip-scenarios --remote-user vscode -f '${{ matrix.feature }}' -i mcr.microsoft.com/devcontainers/python:3.14-trixie .

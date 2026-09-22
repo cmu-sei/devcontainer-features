@@ -1,0 +1,38 @@
+{
+  "name": "Demo development container",
+  "image": "mcr.microsoft.com/devcontainers/python:3.14-trixie",
+  "remoteUser": "vscode",
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "${localWorkspaceFolderBasename}-data",
+      "target": "/home/vscode/.data"
+    }
+  ],
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "configureZshAsDefaultShell": true,
+      "upgradePackages": false
+    },
+    "ghcr.io/cmu-sei/devcontainer-features/bedrock:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/chat:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/claude:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/codex:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/grok:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/herdr:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/oh-my-logo:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/opencode:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/pi:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/pure-prompt:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/tmux:1": {}
+  },
+  "containerEnv": {
+    "NODE_EXTRA_CA_CERTS": "/etc/ssl/certs/ca-certificates.crt",
+    "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt"
+  },
+  "remoteEnv": {
+    "ORG_DEVCONTAINER_DIR": "${containerWorkspaceFolder}/.devcontainer",
+    "LANG": "C.UTF-8",
+    "TERM": "xterm-256color"
+  }
+}

@@ -1,0 +1,16 @@
+{
+    "id": "oh-my-logo",
+    "version": "1.0.0",
+    "name": "Oh My Logo",
+    "description": "Installs the oh-my-logo npm package globally",
+    "dependsOn": {
+        "ghcr.io/devcontainers/features/node:2": {}
+    },
+    "options": {
+        "version": {
+            "type": "string",
+            "default": "0.5.0",
+            "description": "Exact upstream tool version installed at image build time."
+        }
+    }
+}

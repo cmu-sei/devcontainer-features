@@ -1,0 +1,24 @@
+{
+    "id": "codex",
+    "version": "1.0.0",
+    "name": "Codex CLI",
+    "description": "Installs the OpenAI Codex CLI via the official installer script",
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ],
+    "postCreateCommand": "bash -l /usr/local/share/org-features/codex/postcreate.sh",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "openai.chatgpt"
+            ]
+        }
+    },
+    "options": {
+        "version": {
+            "type": "string",
+            "default": "0.155.1",
+            "description": "Exact upstream tool version installed at image build time."
+        }
+    }
+}

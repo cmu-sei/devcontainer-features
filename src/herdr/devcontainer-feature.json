@@ -1,0 +1,11 @@
+{
+    "id": "herdr",
+    "version": "1.0.0",
+    "name": "Herdr",
+    "description": "Installs the pinned Herdr terminal workspace manager with verified release checksums",
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ],
+    "postCreateCommand": "bash -l /usr/local/share/org-features/herdr/postcreate.sh",
+    "postStartCommand": "bash -l /usr/local/share/org-features/herdr/poststart.sh"
+}
