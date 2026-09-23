@@ -1,0 +1,16 @@
+# Codex CLI configuration for AWS GovCloud (US), verified on Codex 0.155.1.
+# Mantle's automatic endpoint resolver excludes GovCloud (openai/codex#29646),
+# but an explicit base_url skips that resolver and keeps native AWS SigV4 auth.
+# No proxy, Bedrock API key, or patched Codex binary is needed.
+model_provider = "amazon-bedrock"
+model = "openai.gpt-5.6-terra"
+model_reasoning_effort = "medium"
+model_reasoning_summary = "none"
+sandbox_mode = "danger-full-access"
+
+# Both values are required: profile.env uses east for Claude, while these OpenAI
+# models are served in west. Mantle takes bare openai.* ids, not us-gov.* ids.
+# Keep reasoning summaries disabled: Mantle rejects reasoning.summary.
+[model_providers.amazon-bedrock]
+base_url = "https://bedrock-mantle.us-gov-west-1.api.aws/openai/v1"
+aws = { region = "us-gov-west-1" }

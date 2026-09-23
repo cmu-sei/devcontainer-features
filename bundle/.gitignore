@@ -1,0 +1,11 @@
+devcontainer.env
+devcontainer-lock.json
+
+# Personal, untracked work area (Open Terminal's working directory).
+# The directory and its README are tracked; everything you create inside is not.
+work/*
+!work/README.md
+
+# The repo root ignores *.env, but the profile templates ship with the bundle
+# (their secret values are blank; setup fills them into devcontainer.env).
+!profiles/*/profile.env

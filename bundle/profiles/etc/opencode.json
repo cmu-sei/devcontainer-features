@@ -1,0 +1,18 @@
+{
+  "disabled_providers": ["opencode"],
+  "provider": {
+    "etc": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "chat.etc",
+      "options": {
+        "baseURL": "https://chat.etc.sei.cmu.edu/api",
+        "apiKey": "{env:ETC_API_KEY}"
+      },
+      "models": {
+        "gpt-oss-120b": {
+          "name": "gpt-oss-120b"
+        }
+      }
+    }
+  }
+}

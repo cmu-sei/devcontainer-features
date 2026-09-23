@@ -1,0 +1,19 @@
+{
+  "providers": {
+    "opal": {
+      "baseUrl": "https://opal.sei.cmu.edu/api/v1",
+      "api": "openai-completions",
+      "apiKey": "$OPAL_API_KEY",
+      "models": [
+        {
+          "id": "openai/gpt-oss-120b",
+          "name": "gpt-oss-120b"
+        },
+        {
+          "id": "RedHatAI/gemma-4-26B-A4B-it-FP8-dynamic",
+          "name": "gemma-4-26b"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,32 @@
+# Grok CLI models for Amazon Bedrock (AWS GovCloud (US) Regions).
+#
+# This fragment is concatenated into /etc/grok/managed_config.toml by
+# postcreate.sh, which also emits the [models] table (default + allowed_models
+# from the [model."..."] keys below) — so keep this file to [auth_provider.*]
+# and [model."awsgov/..."] tables only, and list the preferred default first.
+#
+# Grok CLI has no native Bedrock (SigV4) provider; it reaches Bedrock through
+# the Mantle OpenAI-compatible endpoint with a Bedrock API key as the bearer
+# token. `bedrock-api-key <region>` (installed by features/grok) mints one from
+# the profile's AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY on each refresh; the key
+# is Region-scoped, hence one auth provider per Region. GovCloud Mantle splits
+# the Grok family by Region: xai.grok-4.6 is served in us-gov-east-1 ONLY and
+# xai.grok-4.3 in us-gov-west-1 only (each returns "The model ... does not
+# exist" from the other), so this Region matches profile.env's AWS_REGION but
+# must not be "harmonized" with the us-gov-west-1 that OpenAI models use in
+# config.toml/opencode.json. Bearer-token auth verified live in GovCloud.
+# Mantle rejects `reasoning.summary`, hence reasoning_summary = "none".
+
+[auth_provider.bedrock-us-gov-east-1]
+command = "bedrock-api-key us-gov-east-1"
+token_ttl_secs = 1800
+
+[model."awsgov/grok-4.6"]
+model = "xai.grok-4.6"
+base_url = "https://bedrock-mantle.us-gov-east-1.api.aws/openai/v1"
+name = "Grok 4.6 (Bedrock GovCloud)"
+description = "xAI Grok 4.6 via Amazon Bedrock Mantle, us-gov-east-1"
+api_backend = "responses"
+reasoning_summary = "none"
+auth_provider = "bedrock-us-gov-east-1"
+context_window = 500000

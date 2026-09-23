@@ -1,0 +1,41 @@
+{
+  "providers": {
+    "amazon-bedrock": {
+      "baseUrl": "https://bedrock-runtime.us-gov-east-1.amazonaws.com",
+      "api": "bedrock-converse-stream",
+      "models": [
+        {
+          "id": "us-gov.anthropic.claude-fable-5-1",
+          "name": "Claude Fable 5.1 (GovCloud)",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": { "input": 11, "output": 55, "cacheRead": 0.275, "cacheWrite": 13.75 },
+          "contextWindow": 1000000,
+          "maxTokens": 128000,
+          "thinkingLevelMap": { "off": null, "xhigh": "xhigh", "max": "max" }
+        },
+        {
+          "id": "us-gov.anthropic.claude-opus-5-5",
+          "name": "Claude Opus 5.5 (GovCloud)",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": { "input": 4.4, "output": 22, "cacheRead": 0.22, "cacheWrite": 5.5 },
+          "contextWindow": 1000000,
+          "maxTokens": 128000,
+          "thinkingLevelMap": { "xhigh": "xhigh", "max": "max" }
+        },
+        {
+          "id": "us-gov.anthropic.claude-sonnet-5",
+          "name": "Claude Sonnet 5 (GovCloud)",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": { "input": 2, "output": 10, "cacheRead": 0.2, "cacheWrite": 2.5 },
+          "contextWindow": 1000000,
+          "maxTokens": 128000,
+          "compat": { "supportsStrictMode": true },
+          "thinkingLevelMap": { "xhigh": "xhigh", "max": "max" }
+        }
+      ]
+    }
+  }
+}

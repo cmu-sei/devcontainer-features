@@ -1,0 +1,29 @@
+{
+  "disabled_providers": ["opencode"],
+  "provider": {
+    "opal": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "SEI OPAL",
+      "options": {
+        "baseURL": "https://opal.sei.cmu.edu/api",
+        "apiKey": "{env:OPAL_API_KEY}"
+      },
+      "models": {
+        "openai/gpt-oss-120b": {
+          "name": "gpt-oss-120b",
+          "limit": {
+            "context": 131072,
+            "output": 32768
+          }
+        },
+        "RedHatAI/gemma-4-26B-A4B-it-FP8-dynamic": {
+          "name": "gemma-4-26b",
+          "limit": {
+            "context": 262144,
+            "output": 32768
+          }
+        }
+      }
+    }
+  }
+}

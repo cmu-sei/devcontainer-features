@@ -1,0 +1,9 @@
+Marker: this provider is approved for CUI data.
+
+Its EXISTENCE is the entire signal - nothing reads the contents. setup.sh's choose_cui
+(and setup.ps1's Select-CuiHandling) partitions .devcontainer/profiles/ on this
+file and deletes whichever side the CUI question did not choose, so a project can reach
+public providers or CUI-approved ones, never both.
+
+Keep it TRACKED in git. The payload a spawn downloads is a git archive, so an untracked
+marker would silently re-label this profile as public in every spawned project.

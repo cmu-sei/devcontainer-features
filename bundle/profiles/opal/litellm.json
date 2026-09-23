@@ -1,0 +1,20 @@
+{
+  "model_list": [
+    {
+      "model_name": "opal/gpt-oss-120b",
+      "litellm_params": {
+        "model": "openai/openai/gpt-oss-120b",
+        "api_base": "https://opal.sei.cmu.edu/api/v1",
+        "api_key": "os.environ/OPAL_API_KEY"
+      }
+    },
+    {
+      "model_name": "opal/gemma-4-26b",
+      "litellm_params": {
+        "model": "openai/RedHatAI/gemma-4-26B-A4B-it-FP8-dynamic",
+        "api_base": "https://opal.sei.cmu.edu/api/v1",
+        "api_key": "os.environ/OPAL_API_KEY"
+      }
+    }
+  ]
+}

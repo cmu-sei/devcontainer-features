@@ -1,0 +1,43 @@
+name: Release bundle
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to create or update (e.g. v1.2.3)
+        required: true
+permissions:
+  contents: read
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package ./bundle as tar.gz and zip, plus the spawn scripts
+        # git archive ships only tracked files (honoring .gitignore) and keeps
+        # the executable bit on scripts in both formats.
+        run: |
+          mkdir -p dist
+          # Unversioned asset names keep releases/latest/download/<asset> stable;
+          # the release tag carries the version.
+          name="devcontainer"
+          git archive --format=tar.gz --prefix=.devcontainer/ -o "dist/$name.tar.gz" HEAD:bundle
+          git archive --format=zip --prefix=.devcontainer/ -o "dist/$name.zip" HEAD:bundle
+          # The spawn scripts ship with the bundle they download, so
+          # `curl .../releases/latest/download/spawn.sh | bash -s -- <target>` works.
+          cp tools/spawn.sh tools/spawn.ps1 dist/
+          (cd dist && sha256sum "$name.tar.gz" "$name.zip" spawn.sh spawn.ps1 > "$name.sha256")
+          tar -tzvf "dist/$name.tar.gz"
+      - name: Publish release assets
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TAG" --generate-notes
+          fi

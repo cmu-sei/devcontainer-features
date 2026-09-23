@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        feature: [bedrock, chat, claude, codex, grok, herdr, oh-my-logo, opencode, pi, pure-prompt, tmux]
+        feature: [bedrock, chat, claude, codex, grok, herdr, oh-my-logo, opencode, pi, pure-prompt, sei-certs, tmux]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

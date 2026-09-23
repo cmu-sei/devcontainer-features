@@ -1,0 +1,69 @@
+{
+  "model_list": [
+    {
+      "model_name": "awsgov/fable-5.1",
+      "litellm_params": {
+        "model": "bedrock/us-gov.anthropic.claude-fable-5-1",
+        "aws_region_name": "us-gov-east-1",
+        "max_tokens": 32768,
+        "drop_params": true
+      }
+    },
+    {
+      "model_name": "awsgov/opus-5.5",
+      "litellm_params": {
+        "model": "bedrock/us-gov.anthropic.claude-opus-5-5",
+        "aws_region_name": "us-gov-east-1",
+        "max_tokens": 32768,
+        "drop_params": true,
+        "additional_drop_params": ["temperature", "top_p"]
+      },
+      "model_info": {
+        "mode": "chat",
+        "max_tokens": 128000,
+        "max_input_tokens": 1000000,
+        "max_output_tokens": 128000,
+        "input_cost_per_token": 0.0000044,
+        "output_cost_per_token": 0.000022,
+        "cache_read_input_token_cost": 0.00000022,
+        "cache_creation_input_token_cost": 0.0000055,
+        "supports_vision": true,
+        "supports_function_calling": true,
+        "supports_tool_choice": true,
+        "supports_reasoning": true,
+        "supports_adaptive_thinking": true,
+        "supports_output_config": true,
+        "supports_max_reasoning_effort": true,
+        "supports_xhigh_reasoning_effort": true,
+        "supports_sampling_params": false,
+        "supports_assistant_prefill": false,
+        "supports_prompt_caching": true
+      }
+    },
+    {
+      "model_name": "awsgov/sonnet-5",
+      "litellm_params": {
+        "model": "bedrock/us-gov.anthropic.claude-sonnet-5",
+        "aws_region_name": "us-gov-east-1",
+        "max_tokens": 32768,
+        "drop_params": true
+      }
+    },
+    {
+      "model_name": "awsgov/grok-4.6",
+      "litellm_params": {
+        "model": "bedrock_mantle/xai.grok-4.6",
+        "aws_region_name": "us-gov-east-1",
+        "api_base": "https://bedrock-mantle.us-gov-east-1.api.aws",
+        "max_tokens": 32768,
+        "reasoning_effort": "low",
+        "drop_params": true,
+        "additional_drop_params": ["temperature", "top_p"]
+      },
+      "model_info": {
+        "mode": "responses",
+        "use_openai_responses_path": true
+      }
+    }
+  ]
+}

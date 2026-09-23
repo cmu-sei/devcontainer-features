@@ -1,0 +1,15 @@
+{
+  "providers": {
+    "etc": {
+      "baseUrl": "https://chat.etc.sei.cmu.edu/api/v1",
+      "api": "openai-completions",
+      "apiKey": "$ETC_API_KEY",
+      "models": [
+        {
+          "id": "gpt-oss-120b",
+          "name": "gpt-oss-120b"
+        }
+      ]
+    }
+  }
+}

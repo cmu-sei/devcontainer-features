@@ -23,6 +23,7 @@ Registry (GHCR) before using the registry references in the examples.
 | [opencode](src/opencode/README.md) | OpenCode with profile-based configuration and persistent user state. |
 | [pi](src/pi/README.md) | Pi Coding Agent with profile-based configuration and persistent user state. |
 | [pure-prompt](src/pure-prompt/README.md) | Pure Zsh prompt and workspace Git dirty indicator. |
+| [sei-certs](src/sei-certs/README.md) | SEI and Zscaler root CAs in the system trust store. |
 | [tmux](src/tmux/README.md) | tmux with the organization's terminal defaults. |
 
 ## Repository layout
@@ -31,9 +32,10 @@ Registry (GHCR) before using the registry references in the examples.
 | --- | --- |
 | `src/` | Feature packages. Only their contents are published and downloaded by consumers. |
 | `test/` | Dev Container CLI installation tests, one directory per feature. |
-| `tools/` | Maintainer tooling: shared helper source (`lib/`), sync/validation scripts, and offline lifecycle regression tests (`runtime-tests/`). |
+| `bundle/` | The complete `.devcontainer/` a spawned project receives: Dockerfile, `devcontainer.json` referencing the published features, provider profiles, and the setup/lifecycle scripts. Released as `devcontainer.tar.gz` and `devcontainer.zip`. |
+| `tools/` | Maintainer tooling: shared helper source (`lib/`), sync/validation scripts, and offline lifecycle regression tests (`runtime-tests/`). Also the spawn scripts (`spawn.sh`, `spawn.ps1`), which users download from the release rather than from a checkout. |
 | `examples/` | Example consumer configuration. |
-| `.github/workflows/` | Validation and publishing automation. |
+| `.github/workflows/` | Validation (`test.yml`), feature publishing to GHCR (`release.yml`), and the bundle release (`release-bundle.yml`). |
 
 ## Requirements
 
@@ -44,12 +46,54 @@ supported OS families. Chat and Grok require system Python; Chat also requires t
 C/C++ build tools and libxml2/libxslt development libraries supplied by the Python base.
 Other bases need equivalent prerequisites and are not covered by the integration tests.
 
-Install organizational CA certificates in the base Dockerfile before feature
-installation, using `COPY` and `update-ca-certificates`. Feature declaration order
-does not control installation order: Node and uv dependencies can download software
-before a local certificate feature runs.
+CA certificates must be trusted before any feature downloads software. Feature
+declaration order does not control installation order: Node and uv dependencies can
+download software before a certificate feature runs. Either list
+`ghcr.io/cmu-sei/devcontainer-features/sei-certs` first in
+`overrideFeatureInstallOrder` (see [sei-certs](src/sei-certs/README.md)), or install
+the certificates in the base Dockerfile with `COPY` and `update-ca-certificates`.
 
 ## Usage
+
+### Spawn a project
+
+The spawn scripts download the latest bundle release and set up a project with it.
+Nothing needs to be cloned:
+
+```sh
+# macOS / Linux (requires bash, curl, and tar)
+curl -fsSL https://github.com/cmu-sei/devcontainer-features/releases/latest/download/spawn.sh | bash -s -- my-project
+```
+
+```powershell
+# Windows (PowerShell)
+& ([scriptblock]::Create((irm https://github.com/cmu-sei/devcontainer-features/releases/latest/download/spawn.ps1))) my-project
+```
+
+Omit the directory to be prompted for one. The target decides what happens:
+
+| Target | Result |
+| --- | --- |
+| New or empty directory | A new project: `.devcontainer/` and a starter `README.md`. |
+| Existing project | Only `.devcontainer/` is added; nothing else is modified. |
+| Directory with a `.devcontainer/` | Refused; move or replace it by hand. |
+
+Spawn then runs the bundle's setup, which asks whether the project handles CUI data,
+which provider profiles and features to keep, the profiles' API keys, and whether to
+initialize Git. Keys are written to the gitignored `.devcontainer/devcontainer.env`.
+Setup runs in a staging copy, and the result is moved into the target only when it
+finishes, so a cancelled or failed spawn leaves the target unchanged.
+
+| Option (bash / PowerShell) | Effect |
+| --- | --- |
+| `--version <tag>` / `-Version <tag>` | Use a specific bundle release, e.g. `v1.2.3`, instead of the latest. |
+| `--chat` / `-Chat` | Preselect the browser-chat stack in the feature prompt. |
+| `--git`, `-g` / `-Git`, `-g` | Preselect "yes" for initializing a Git repository. |
+
+Open the project in VS Code to build the container; the build asks nothing further.
+See the bundle's [README](bundle/README.md) for its services and maintenance scripts.
+
+### Add features to an existing configuration
 
 Add the required features to `.devcontainer/devcontainer.json`. This example uses
 an existing Dockerfile and `.devcontainer/devcontainer.env` file.
@@ -86,8 +130,9 @@ installations.
 Feature lifecycle hooks run automatically. Remove project hooks that duplicate tool
 setup or automatically update installed tools; retain unrelated project hooks.
 
-[examples/base/devcontainer.json](examples/base/devcontainer.json) selects all 11
-features and uses the public Python base without profiles or an environment file.
+[examples/base/devcontainer.json](examples/base/devcontainer.json) selects every
+feature except `sei-certs` and uses the public Python base without profiles or an
+environment file.
 Adapt its image or build configuration if the deployment requires CA certificates.
 
 ### Migrate an existing base devcontainer
