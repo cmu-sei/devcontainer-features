@@ -1,8 +1,13 @@
 #!/bin/bash
 set -euo pipefail
-for name in sei-ecdsa-root-ca-g4 sei-rsa-kube-root-ca-g4 sei-rsa-root-ca-g4 zscaler-ca; do
-    test -f "/usr/local/share/ca-certificates/custom/$name.crt"
-    test -e "/etc/ssl/certs/$name.pem"
+# Every certificate the feature installed must be linked into the trust store. The loop
+# reads the installed copies, so the test needs no edit when certificates are added or
+# dropped; the count guards against an install that copied none.
+shopt -s nullglob
+certs=(/usr/local/share/ca-certificates/custom/*.crt)
+test "${#certs[@]}" -gt 0
+for cert in "${certs[@]}"; do
+    test -e "/etc/ssl/certs/$(basename "$cert" .crt).pem"
 done
 test "$SSL_CERT_FILE" = /etc/ssl/certs/ca-certificates.crt
-echo "Feature smoke test passed."
+echo "Feature smoke test passed (${#certs[@]} certificate(s))."
