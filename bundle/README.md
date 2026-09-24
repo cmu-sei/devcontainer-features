@@ -499,7 +499,7 @@ The volume is named based on the project folder name (e.g., `my-project-data`) a
 | `open-terminal/` | — | Open Terminal API key and logs |
 | `searxng/` | — | SearXNG secret key, generated settings, and logs |
 | `supervisor/` | — | supervisord pidfile and log |
-| `shell-history/` | — | Bash and Zsh history files |
+| `shell-history/` | — | Bash, Zsh, Python, and Node REPL history (the `shell-history` feature) |
 
 Every instance of the dev container uses a separate volume so their data is fully isolated.
 

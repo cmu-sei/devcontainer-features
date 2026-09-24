@@ -1,0 +1,22 @@
+{
+    "id": "shell-history",
+    "version": "1.0.0",
+    "name": "Persistent Shell History",
+    "description": "Keeps bash, zsh, and REPL history on the persistent volume, written as each command runs so a rebuild loses nothing",
+    "options": {
+        "include": {
+            "type": "string",
+            "default": "bash,zsh,python,node",
+            "description": "Comma-separated histories to persist: bash, zsh, python (3.13+), node, psql, sqlite3, less."
+        },
+        "directory": {
+            "type": "string",
+            "default": ".data/shell-history",
+            "description": "History directory, relative to the user's home unless absolute. Must be on a persistent volume."
+        }
+    },
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ],
+    "postCreateCommand": "bash -l /usr/local/share/org-features/shell-history/postcreate.sh"
+}

@@ -30,6 +30,7 @@
         "ghcr.io/cmu-sei/devcontainer-features/opencode:1": {},
         "ghcr.io/cmu-sei/devcontainer-features/pi:1": {},
         "ghcr.io/cmu-sei/devcontainer-features/pure-prompt:1": {},
+        "ghcr.io/cmu-sei/devcontainer-features/shell-history:1": {},
         "ghcr.io/cmu-sei/devcontainer-features/tmux:1": {}
     },
     "overrideFeatureInstallOrder": [

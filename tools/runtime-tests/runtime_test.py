@@ -19,7 +19,8 @@ class RuntimeTests(unittest.TestCase):
         self.home.mkdir()
         self.workspace.mkdir()
         self.profiles.mkdir(parents=True)
-        self.env = dict(os.environ, HOME=str(self.home), ORG_DEVCONTAINER_DIR=str(self.config), CONFIGURED_PROFILES='', CHAT_AUTOSTART='0')
+        self.env = dict(os.environ, HOME=str(self.home), ORG_DEVCONTAINER_DIR=str(self.config), CONFIGURED_PROFILES='', CHAT_AUTOSTART='0',
+                        SHELL_COMPLETIONS_PREFIX=str(self.root / 'completions'))
         self.addCleanup(self.temp.cleanup)
 
     def hook(self, feature, phase='postcreate'):
@@ -27,7 +28,8 @@ class RuntimeTests(unittest.TestCase):
                               cwd=self.workspace, env=self.env, capture_output=True, text=True, check=True)
 
     def test_repeat_create_is_idempotent(self):
-        for feature in ['claude', 'codex', 'grok', 'herdr', 'opencode', 'pi', 'chat', 'bedrock']:
+        for feature in ['claude', 'codex', 'grok', 'herdr', 'opencode', 'pi', 'chat', 'bedrock',
+                        'shell-history', 'shell-completions']:
             with self.subTest(feature=feature):
                 self.hook(feature)
                 self.hook(feature)
@@ -117,6 +119,37 @@ class RuntimeTests(unittest.TestCase):
         expected = (ASSETS / 'herdr/herdr-skill.md').read_text()
         self.assertEqual((self.home / '.claude/skills/herdr/SKILL.md').read_text(), expected)
         self.assertEqual((self.home / '.agents/skills/herdr/SKILL.md').read_text(), expected)
+
+    def test_shell_history_seeds_volume_once(self):
+        (self.home / '.zsh_history').write_text(': 1:0;from-image\n')
+        self.hook('shell-history')
+        saved = self.home / '.data/shell-history/.zsh_history'
+        self.assertEqual(saved.read_text(), ': 1:0;from-image\n')
+        saved.write_text(': 2:0;from-volume\n')
+        self.hook('shell-history')
+        self.assertEqual(saved.read_text(), ': 2:0;from-volume\n')
+        self.assertTrue((self.home / '.data/shell-history/.bash_history').exists())
+
+    def test_shell_completions_writes_valid_and_skips_invalid(self):
+        bin_dir = self.home / 'bin'
+        bin_dir.mkdir()
+        for name, zsh in [('goodcli', '#compdef goodcli'), ('badcli', 'not a completion')]:
+            cli = bin_dir / name
+            cli.write_text(f'#!/bin/bash\n[ "$1" = completion ] || exit 2\n'
+                           f'[ "$2" = zsh ] && echo "{zsh}" || echo "complete -W run {name}"\n')
+            cli.chmod(0o755)
+        self.env['PATH'] = f"{bin_dir}:{self.env['PATH']}"
+        result = subprocess.run(['bash', str(ASSETS / 'shell-completions/install-completions.sh'),
+                                 'goodcli', 'badcli', 'absentcli'],
+                                env=self.env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        prefix = self.root / 'completions'
+        self.assertEqual((prefix / 'zsh/site-functions/_goodcli').read_text(), '#compdef goodcli\n')
+        self.assertTrue((prefix / 'bash-completion/completions/goodcli').exists())
+        self.assertTrue((prefix / 'bash-completion/completions/badcli').exists())
+        self.assertFalse((prefix / 'zsh/site-functions/_badcli').exists())
+        self.assertFalse((prefix / 'zsh/site-functions/_absentcli').exists())
+        self.assertIn("'badcli' did not emit a zsh completion", result.stderr)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
