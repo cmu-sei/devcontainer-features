@@ -1,0 +1,24 @@
+{
+    "default": {
+        "image": "mcr.microsoft.com/devcontainers/python:3.14-trixie",
+        "remoteUser": "vscode",
+        "features": {
+            "ghcr.io/devcontainers/features/node:2": {},
+            "playwright": {}
+        }
+    },
+    "desktop": {
+        "image": "mcr.microsoft.com/devcontainers/python:3.14-trixie",
+        "remoteUser": "vscode",
+        "features": {
+            "ghcr.io/devcontainers/features/node:2": {},
+            "playwright": {
+                "systemDeps": "none",
+                "browsers": "none",
+                "trustLocalCAs": false,
+                "desktop": true,
+                "desktopPassword": "scenario"
+            }
+        }
+    }
+}

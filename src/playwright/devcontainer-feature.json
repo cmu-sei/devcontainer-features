@@ -1,0 +1,52 @@
+{
+    "id": "playwright",
+    "version": "1.0.0",
+    "name": "Playwright",
+    "description": "Installs the Playwright CLI with its browsers' OS dependencies, keeps downloaded browsers on the persistent volume, trusts local CAs in Chromium, and optionally adds a VNC desktop for headed browsers",
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils",
+        "ghcr.io/devcontainers/features/node"
+    ],
+    "init": true,
+    "postCreateCommand": "bash -l /usr/local/share/org-features/playwright/postcreate.sh",
+    "postStartCommand": "bash -l /usr/local/share/org-features/playwright/poststart.sh",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-playwright.playwright"
+            ]
+        }
+    },
+    "options": {
+        "version": {
+            "type": "string",
+            "default": "0.1.21",
+            "description": "Exact @playwright/cli version installed at image build time."
+        },
+        "systemDeps": {
+            "type": "string",
+            "default": "chromium",
+            "description": "Comma-separated browsers whose OS packages are installed at build time: chromium, firefox, webkit. 'none' skips."
+        },
+        "browsers": {
+            "type": "string",
+            "default": "chromium",
+            "description": "Comma-separated browsers downloaded on create for the CLI's bundled Playwright: chromium, firefox, webkit. The first becomes playwright-cli's default browser. 'none' skips."
+        },
+        "trustLocalCAs": {
+            "type": "boolean",
+            "default": true,
+            "description": "Import every CA under /usr/local/share/ca-certificates into the user's NSS database on each start, which Chromium reads instead of the system store."
+        },
+        "desktop": {
+            "type": "boolean",
+            "default": false,
+            "description": "Install a VNC/noVNC desktop for headed browsers, started on demand with playwright-desktop. Skipped on WSL, which has WSLg."
+        },
+        "desktopPassword": {
+            "type": "string",
+            "default": "vscode",
+            "description": "VNC password for the desktop option."
+        }
+    }
+}

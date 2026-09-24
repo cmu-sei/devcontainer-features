@@ -14,6 +14,7 @@
       "configureZshAsDefaultShell": true,
       "upgradePackages": false
     },
+    "ghcr.io/devcontainers/features/node:2": {},
     "ghcr.io/cmu-sei/devcontainer-features/bedrock:1": {},
     "ghcr.io/cmu-sei/devcontainer-features/chat:1": {},
     "ghcr.io/cmu-sei/devcontainer-features/claude:1": {},
@@ -23,6 +24,7 @@
     "ghcr.io/cmu-sei/devcontainer-features/oh-my-logo:1": {},
     "ghcr.io/cmu-sei/devcontainer-features/opencode:1": {},
     "ghcr.io/cmu-sei/devcontainer-features/pi:1": {},
+    "ghcr.io/cmu-sei/devcontainer-features/playwright:1": {},
     "ghcr.io/cmu-sei/devcontainer-features/pure-prompt:1": {},
     "ghcr.io/cmu-sei/devcontainer-features/shell-completions:1": {},
     "ghcr.io/cmu-sei/devcontainer-features/shell-history:1": {},

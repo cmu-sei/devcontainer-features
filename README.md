@@ -22,6 +22,7 @@ Registry (GHCR) before using the registry references in the examples.
 | [oh-my-logo](src/oh-my-logo/README.md) | The Oh My Logo CLI. |
 | [opencode](src/opencode/README.md) | OpenCode with profile-based configuration and persistent user state. |
 | [pi](src/pi/README.md) | Pi Coding Agent with profile-based configuration and persistent user state. |
+| [playwright](src/playwright/README.md) | Playwright CLI, browser OS packages and cache, Chromium CA trust, and an optional headed-browser desktop. |
 | [pure-prompt](src/pure-prompt/README.md) | Pure Zsh prompt and workspace Git dirty indicator. |
 | [sei-certs](src/sei-certs/README.md) | SEI and Zscaler root CAs in the system trust store. |
 | [shell-completions](src/shell-completions/README.md) | zsh, bash, and fish completions for CLIs installed by other features. |
@@ -127,7 +128,7 @@ an existing Dockerfile and `.devcontainer/devcontainer.env` file.
 
 Node-dependent features require `ghcr.io/devcontainers/features/node:2`. Use the
 same dependency version and options across the deployment to avoid duplicate
-installations.
+installations. `playwright` does not pull Node in; list it yourself.
 
 Feature lifecycle hooks run automatically. Remove project hooks that duplicate tool
 setup or automatically update installed tools; retain unrelated project hooks.
@@ -203,11 +204,11 @@ settings and model entitlements before use.
 
 ## Versions and updates
 
-Feature package versions start at `1.0.0`. Claude, Codex, Grok, OpenCode, Pi, and
-Oh My Logo expose a tool `version` option with a pinned default. Herdr uses a
-checked-in release manifest and checksums, Pure is pinned to a commit, and Chat
-pins its bundle dependencies. Installers run during image builds. Claude's automatic
-updater is disabled; users can still update tools manually.
+Feature package versions start at `1.0.0`. Claude, Codex, Grok, OpenCode, Pi,
+Oh My Logo, and Playwright expose a tool `version` option with a pinned default.
+Herdr uses a checked-in release manifest and checksums, Pure is pinned to a
+commit, and Chat pins its bundle dependencies. Installers run during image builds.
+Claude's automatic updater is disabled; users can still update tools manually.
 
 To release an update:
 
