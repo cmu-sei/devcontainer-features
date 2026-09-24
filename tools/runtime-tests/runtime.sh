@@ -11,5 +11,7 @@ for feature in /repo/src/*; do
     # The first feature to run must hand ~/.local back to the remote user.
     [ "$(stat -c %U /home/vscode/.local)" = vscode ]
 done
+# Exercise the generated shell configuration, not just copied runtime scripts.
+bash /repo/src/shell-history/install.sh
 # Test the actual installed layout, with no feature implementation in the workspace.
 su - vscode -s /bin/bash -c 'python3 /repo/tools/runtime-tests/runtime_test.py'

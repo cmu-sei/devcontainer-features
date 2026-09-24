@@ -29,6 +29,15 @@ the two zsh files; the system files still apply if a dotfiles repo replaces
 - **Applies once the directory exists.** The create step makes it; a terminal opened
   before that, or a shell whose home has no volume (`sudo -i`), keeps its default.
 - On first create, an existing `~/.bash_history` or `~/.zsh_history` seeds the volume.
+  An existing empty history file is preserved, so clearing history is permanent
+  across later creates.
+- Custom history destinations are prepared for the remote user, including fresh
+  root-owned volumes. Only the destination directory's ownership is adjusted.
+- Plain zsh gets a 10,000-entry history limit. Existing non-default limits are
+  retained, and settings made later in `~/.zshrc` (including `SAVEHIST=0`) take
+  precedence when the feature is sourced again.
+- Bash history flushing preserves the previous exit status for existing prompt
+  hooks and supports both string and array `PROMPT_COMMAND` values.
 
 History files are keyed by the volume, so each project's container keeps its own.
 

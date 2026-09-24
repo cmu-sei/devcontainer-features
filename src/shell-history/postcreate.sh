@@ -13,14 +13,23 @@ case "$DIRECTORY" in
     *)  HIST_DIR="$HOME/$DIRECTORY" ;;
 esac
 
-# Chowns a root-owned fresh volume; warns when ~/.data is not a mount.
-org_prepare_data
-mkdir -p "$HIST_DIR"
+# Keep the shared volume setup for the default layout. Custom directories may
+# instead live on a separate root-owned mount; prepare that destination itself.
+case "$HIST_DIR" in
+    "$HOME/.data"|"$HOME/.data/"*) org_prepare_data ;;
+esac
+if ! mkdir -p "$HIST_DIR" 2>/dev/null || [ ! -w "$HIST_DIR" ]; then
+    if [ "$(id -u)" = 0 ]; then
+        install -d -m 755 -o "$(id -u)" -g "$(id -g)" "$HIST_DIR"
+    else
+        sudo -n install -d -m 755 -o "$(id -u)" -g "$(id -g)" "$HIST_DIR"
+    fi
+fi
 
 # Seed from the image's own history the first time only, so nothing typed during
 # the build's first shell (or before this feature was added) is dropped.
 for name in .bash_history .zsh_history; do
-    if [ -s "$HOME/$name" ] && [ ! -L "$HOME/$name" ] && [ ! -s "$HIST_DIR/$name" ]; then
+    if [ -s "$HOME/$name" ] && [ ! -L "$HOME/$name" ] && [ ! -e "$HIST_DIR/$name" ] && [ ! -L "$HIST_DIR/$name" ]; then
         cp "$HOME/$name" "$HIST_DIR/$name"
     fi
 done

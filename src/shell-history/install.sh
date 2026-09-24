@@ -29,6 +29,13 @@ printf 'INCLUDE=%s\nDIRECTORY=%s\n' "$INCLUDE" "$DIRECTORY" > "$DEST/options.env
     if has zsh; then cat <<'SH'
     if [ -n "${ZSH_VERSION:-}" ]; then
         HISTFILE="$__shell_history_dir/.zsh_history"
+        # Configure defaults once. The second source from ~/.zshrc must not undo
+        # user limits (including SAVEHIST=0) set after the system rc ran.
+        if [ -z "${__org_zsh_history_initialized:-}" ]; then
+            if (( SAVEHIST == 0 )); then SAVEHIST=10000; fi
+            if (( HISTSIZE == 30 )); then HISTSIZE=10000; fi
+            __org_zsh_history_initialized=1
+        fi
         # Write per command: a rebuild SIGKILLs open terminals before they save on exit.
         setopt INC_APPEND_HISTORY
     fi
@@ -38,9 +45,20 @@ SH
     if [ -n "${BASH_VERSION:-}" ]; then
         HISTFILE="$__shell_history_dir/.bash_history"
         shopt -s histappend
-        case "${PROMPT_COMMAND:-}" in
-            *"history -a"*) ;;
-            *) PROMPT_COMMAND="history -a${PROMPT_COMMAND:+; $PROMPT_COMMAND}" ;;
+        __org_shell_history_append() {
+            local previous_status=$?
+            builtin history -a
+            return "$previous_status"
+        }
+        case "${PROMPT_COMMAND[*]-}" in
+            *"__org_shell_history_append"*) ;;
+            *)
+                if [[ "$(declare -p PROMPT_COMMAND 2>/dev/null)" == "declare -a"* ]]; then
+                    PROMPT_COMMAND=(__org_shell_history_append "${PROMPT_COMMAND[@]}")
+                else
+                    PROMPT_COMMAND="__org_shell_history_append${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+                fi
+                ;;
         esac
     fi
 SH
