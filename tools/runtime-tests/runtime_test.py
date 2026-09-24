@@ -176,6 +176,54 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual((mount / 'nested').stat().st_uid, 0)
         subprocess.run(['sudo', '-n', 'chown', '-R', str(os.getuid()), str(mount)], check=True)
 
+    def playwright_assets(self, options):
+        # A private copy, so these options leave the installed feature untouched.
+        assets = self.root / 'playwright-assets'
+        if not assets.exists():
+            shutil.copytree(ASSETS / 'playwright', assets)
+        (assets / 'options.env').write_text(options)
+        return assets
+
+    def test_playwright_cache_moves_to_volume_once(self):
+        assets = self.playwright_assets('BROWSERS=none\nTRUSTLOCALCAS=false\n')
+        cache = self.home / '.cache/ms-playwright'
+        (cache / 'chromium-1').mkdir(parents=True)
+        (cache / 'chromium-1/marker').write_text('seeded')
+        for _ in range(2):
+            subprocess.run(['bash', str(assets / 'postcreate.sh')], env=self.env,
+                           capture_output=True, text=True, check=True)
+        self.assertEqual(os.readlink(cache), str(self.home / '.data/playwright'))
+        self.assertEqual((cache / 'chromium-1/marker').read_text(), 'seeded')
+
+    def test_playwright_respects_relocated_cache(self):
+        assets = self.playwright_assets('BROWSERS=none\nTRUSTLOCALCAS=false\n')
+        cache = self.home / '.cache/ms-playwright'
+        cache.mkdir(parents=True)
+        self.env['PLAYWRIGHT_BROWSERS_PATH'] = str(self.root / 'browsers')
+        subprocess.run(['bash', str(assets / 'postcreate.sh')], env=self.env,
+                       capture_output=True, text=True, check=True)
+        self.assertFalse(cache.is_symlink())
+        self.assertFalse((self.home / '.data/playwright').exists())
+
+    def test_playwright_seeds_default_browser_once(self):
+        # Offline, the download itself fails; the hook warns and still configures the CLI.
+        assets = self.playwright_assets('BROWSERS=firefox,chromium\nTRUSTLOCALCAS=false\n')
+        config = self.home / '.playwright/cli.config.json'
+        subprocess.run(['bash', str(assets / 'postcreate.sh')], env=self.env,
+                       capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(config.read_text())['browser']['browserName'], 'firefox')
+        config.write_text('{"browser": {"browserName": "webkit"}, "outputDir": "out"}')
+        subprocess.run(['bash', str(assets / 'postcreate.sh')], env=self.env,
+                       capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(config.read_text()),
+                         {'browser': {'browserName': 'webkit'}, 'outputDir': 'out'})
+
+    def test_playwright_trust_is_optional(self):
+        assets = self.playwright_assets('TRUSTLOCALCAS=false\n')
+        subprocess.run(['bash', str(assets / 'poststart.sh')], env=self.env,
+                       capture_output=True, text=True, check=True)
+        self.assertFalse((self.home / '.pki').exists())
+
     def test_plain_zsh_writes_history_before_exit(self):
         self.hook('shell-history')
         script = f'''source {ASSETS}/shell-history/history.sh
