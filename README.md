@@ -24,6 +24,8 @@ Registry (GHCR) before using the registry references in the examples.
 | [pi](src/pi/README.md) | Pi Coding Agent with profile-based configuration and persistent user state. |
 | [pure-prompt](src/pure-prompt/README.md) | Pure Zsh prompt and workspace Git dirty indicator. |
 | [sei-certs](src/sei-certs/README.md) | SEI and Zscaler root CAs in the system trust store. |
+| [shell-completions](src/shell-completions/README.md) | zsh, bash, and fish completions for CLIs installed by other features. |
+| [shell-history](src/shell-history/README.md) | Shell and REPL history on the persistent volume, written per command. |
 | [tmux](src/tmux/README.md) | tmux with the organization's terminal defaults. |
 
 ## Repository layout
@@ -142,8 +144,9 @@ Adapt its image or build configuration if the deployment requires CA certificate
    `"ghcr.io/cmu-sei/devcontainer-features/<id>:1"`.
 3. Preserve your base Dockerfile, CA certificates, profiles, runtime environment file,
    initializer, and `~/.data` volume mount.
-4. Remove copied feature implementations and duplicate tool setup/update calls. Keep
-   unrelated project hooks, such as shell-history initialization.
+4. Remove copied feature implementations and duplicate tool setup/update calls,
+   including any hand-written `HISTFILE` redirection once `shell-history` is listed.
+   Keep unrelated project hooks.
 5. Rebuild the devcontainer and verify the selected tools and provider configuration.
 
 ## Runtime configuration

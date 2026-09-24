@@ -5,20 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DATA="$HOME/.data"
 sudo chown "$(id -u):$(id -g)" "$DATA"
 
-# --- Persistent shell history ---
-mkdir -p $DATA/shell-history
-touch "$DATA/shell-history/.bash_history" "$DATA/shell-history/.zsh_history"
-
-# Redirect HISTFILE in .bashrc (idempotent)
-if ! grep -q 'HISTFILE=.*\.data' "$HOME/.bashrc" 2>/dev/null; then
-    echo 'export HISTFILE="$HOME/.data/shell-history/.bash_history"' >> "$HOME/.bashrc"
-fi
-
-# Redirect HISTFILE in .zshrc (idempotent)
-if [ -f "$HOME/.zshrc" ] && ! grep -q 'HISTFILE=.*\.data' "$HOME/.zshrc" 2>/dev/null; then
-    echo 'export HISTFILE="$HOME/.data/shell-history/.zsh_history"' >> "$HOME/.zshrc"
-fi
-
 # Install find-skills
 echo "Installing find-skills skill..."
 npx -y skills@latest add vercel-labs/skills -s find-skills \

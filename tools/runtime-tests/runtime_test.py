@@ -2,6 +2,7 @@
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -19,7 +20,8 @@ class RuntimeTests(unittest.TestCase):
         self.home.mkdir()
         self.workspace.mkdir()
         self.profiles.mkdir(parents=True)
-        self.env = dict(os.environ, HOME=str(self.home), ORG_DEVCONTAINER_DIR=str(self.config), CONFIGURED_PROFILES='', CHAT_AUTOSTART='0')
+        self.env = dict(os.environ, HOME=str(self.home), ORG_DEVCONTAINER_DIR=str(self.config), CONFIGURED_PROFILES='', CHAT_AUTOSTART='0',
+                        SHELL_COMPLETIONS_PREFIX=str(self.root / 'completions'))
         self.addCleanup(self.temp.cleanup)
 
     def hook(self, feature, phase='postcreate'):
@@ -27,7 +29,8 @@ class RuntimeTests(unittest.TestCase):
                               cwd=self.workspace, env=self.env, capture_output=True, text=True, check=True)
 
     def test_repeat_create_is_idempotent(self):
-        for feature in ['claude', 'codex', 'grok', 'herdr', 'opencode', 'pi', 'chat', 'bedrock']:
+        for feature in ['claude', 'codex', 'grok', 'herdr', 'opencode', 'pi', 'chat', 'bedrock',
+                        'shell-history', 'shell-completions']:
             with self.subTest(feature=feature):
                 self.hook(feature)
                 self.hook(feature)
@@ -117,6 +120,105 @@ class RuntimeTests(unittest.TestCase):
         expected = (ASSETS / 'herdr/herdr-skill.md').read_text()
         self.assertEqual((self.home / '.claude/skills/herdr/SKILL.md').read_text(), expected)
         self.assertEqual((self.home / '.agents/skills/herdr/SKILL.md').read_text(), expected)
+
+    def test_shell_history_seeds_volume_once(self):
+        (self.home / '.zsh_history').write_text(': 1:0;from-image\n')
+        self.hook('shell-history')
+        saved = self.home / '.data/shell-history/.zsh_history'
+        self.assertEqual(saved.read_text(), ': 1:0;from-image\n')
+        saved.write_text(': 2:0;from-volume\n')
+        self.hook('shell-history')
+        self.assertEqual(saved.read_text(), ': 2:0;from-volume\n')
+        saved.write_text('')
+        self.hook('shell-history')
+        self.assertEqual(saved.read_text(), '')
+        self.assertTrue((self.home / '.data/shell-history/.bash_history').exists())
+
+    def test_shell_completions_writes_valid_and_skips_invalid(self):
+        bin_dir = self.home / 'bin'
+        bin_dir.mkdir()
+        for name, zsh in [('goodcli', '#compdef goodcli'), ('badcli', 'not a completion')]:
+            cli = bin_dir / name
+            cli.write_text(f'#!/bin/bash\n[ "$1" = completion ] || exit 2\n'
+                           f'[ "$2" = zsh ] && echo "{zsh}" || echo "complete -W run {name}"\n')
+            cli.chmod(0o755)
+        self.env['PATH'] = f"{bin_dir}:{self.env['PATH']}"
+        result = subprocess.run(['bash', str(ASSETS / 'shell-completions/install-completions.sh'),
+                                 'goodcli', 'badcli', 'absentcli'],
+                                env=self.env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        prefix = self.root / 'completions'
+        self.assertEqual((prefix / 'zsh/site-functions/_goodcli').read_text(), '#compdef goodcli\n')
+        self.assertTrue((prefix / 'bash-completion/completions/goodcli').exists())
+        self.assertTrue((prefix / 'bash-completion/completions/badcli').exists())
+        self.assertFalse((prefix / 'zsh/site-functions/_badcli').exists())
+        self.assertFalse((prefix / 'zsh/site-functions/_absentcli').exists())
+        self.assertIn("'badcli' did not emit a zsh completion", result.stderr)
+
+    def test_shell_history_custom_root_owned_directory(self):
+        # Copy installed assets so changing this test's options does not affect
+        # the feature installed in the container or any other test.
+        assets = self.root / 'history-assets'
+        shutil.copytree(ASSETS / 'shell-history', assets)
+        mount = self.root / 'root-owned-volume'
+        subprocess.run(['sudo', '-n', 'install', '-d', '-o', 'root', '-g', 'root',
+                        '-m', '755', str(mount)], check=True)
+        for directory in [mount / 'nested/history', mount]:
+            with self.subTest(directory=directory):
+                (assets / 'options.env').write_text(f'DIRECTORY={directory}\n')
+                subprocess.run(['bash', str(assets / 'postcreate.sh')], env=self.env,
+                               capture_output=True, text=True, check=True)
+                self.assertEqual(directory.stat().st_uid, os.getuid())
+                self.assertTrue((directory / '.bash_history').exists())
+                self.assertTrue((directory / '.zsh_history').exists())
+        self.assertFalse((self.home / '.data').exists())
+        # Preparing a nested destination must not recursively chown its parents.
+        self.assertEqual((mount / 'nested').stat().st_uid, 0)
+        subprocess.run(['sudo', '-n', 'chown', '-R', str(os.getuid()), str(mount)], check=True)
+
+    def test_plain_zsh_writes_history_before_exit(self):
+        self.hook('shell-history')
+        script = f'''source {ASSETS}/shell-history/history.sh
+print -r -- HISTORY_PERSISTENCE_MARKER
+grep -qx 'print -r -- HISTORY_PERSISTENCE_MARKER' "$HISTFILE"; result=$?; unset HISTFILE; exit "$result"
+'''
+        result = subprocess.run(['zsh', '-dfi'], input=script, env=self.env,
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_zsh_preserves_configured_limits_on_repeat_source(self):
+        self.hook('shell-history')
+        result = subprocess.run(['zsh', '-dfc', f'''
+HISTSIZE=1234; SAVEHIST=567
+source {ASSETS}/shell-history/history.sh
+[[ $HISTSIZE == 1234 && $SAVEHIST == 567 ]] || exit 1
+SAVEHIST=0
+source {ASSETS}/shell-history/history.sh
+[[ $HISTSIZE == 1234 && $SAVEHIST == 0 ]]
+'''], env=self.env, capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_bash_prompt_hooks_keep_exit_status_and_history(self):
+        self.hook('shell-history')
+        for prompt in [
+            "PROMPT_COMMAND='observe_status'",
+            "PROMPT_COMMAND=(observe_status 'printf \"SECOND_HOOK\\n\"')",
+        ]:
+            with self.subTest(prompt=prompt):
+                script = f'''observe_status() {{ printf 'HOOK_STATUS=%s\\n' "$?"; }}
+{prompt}
+source {ASSETS}/shell-history/history.sh
+source {ASSETS}/shell-history/history.sh
+false
+grep -qx false "$HISTFILE"; result=$?; unset HISTFILE; exit "$result"
+'''
+                result = subprocess.run(['bash', '--noprofile', '--norc', '-i'],
+                                        input=script, env=self.env, capture_output=True,
+                                        text=True, timeout=15)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout.count('HOOK_STATUS=1\n'), 1, result.stdout)
+                if '=(' in prompt:
+                    self.assertIn('SECOND_HOOK\n', result.stdout)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

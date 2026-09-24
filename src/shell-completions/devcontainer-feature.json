@@ -1,0 +1,30 @@
+{
+    "id": "shell-completions",
+    "version": "1.0.0",
+    "name": "Shell Completions",
+    "description": "Generates zsh, bash, and fish completions for CLIs installed by other features, at build time and again on create",
+    "options": {
+        "commands": {
+            "type": "string",
+            "default": "auto",
+            "description": "Comma-separated CLIs to generate completions for. 'auto' is every known CLI on PATH: just, kubectl, helm, minikube, uv, docker, gh, rg, fd, codex. Unknown names use '<cli> completion <shell>'."
+        },
+        "shells": {
+            "type": "string",
+            "default": "zsh,bash",
+            "description": "Comma-separated shells to write completions for: zsh, bash, fish."
+        }
+    },
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils",
+        "ghcr.io/devcontainers/features/docker-in-docker",
+        "ghcr.io/devcontainers/features/docker-outside-of-docker",
+        "ghcr.io/devcontainers/features/github-cli",
+        "ghcr.io/devcontainers/features/kubectl-helm-minikube",
+        "ghcr.io/devcontainers-extra/features/uv",
+        "ghcr.io/devcontainers-extra/features/ripgrep",
+        "ghcr.io/jsburckhardt/devcontainer-features/fd",
+        "ghcr.io/jsburckhardt/devcontainer-features/just"
+    ],
+    "postCreateCommand": "bash -l /usr/local/share/org-features/shell-completions/postcreate.sh"
+}
