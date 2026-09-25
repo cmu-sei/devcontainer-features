@@ -14,11 +14,14 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: devcontainers/action@v1
+      - uses: actions/checkout@v7
+      # devcontainers/action@v1 has no node24 release, so call the CLI it wraps directly. The CLI
+      # authenticates to ghcr.io with GITHUB_TOKEN; it is pinned to the version the tests use.
+      - uses: actions/setup-node@v7
         with:
-          publish-features: 'true'
-          base-path-to-features: ./src
-          generate-docs: 'false'
+          node-version: '22'
+      - run: npm install -g @devcontainers/cli@0.87.0
+      - name: Publish features to GHCR
+        run: devcontainer features publish --registry ghcr.io --namespace "$GITHUB_REPOSITORY" ./src
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
