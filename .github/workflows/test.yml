@@ -11,15 +11,22 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: python3 tools/validate.py
+      # features publish does not check metadata against the schema; devcontainers/action did.
+      - name: Validate feature metadata against the Dev Container Feature schema
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/feature.schema.json" \
+            https://raw.githubusercontent.com/devcontainers/spec/1b2baddb5f1071ca0e8bcb7eb56dbc9d3e4a674f/schemas/devContainerFeature.schema.json
+          npx -y ajv-cli@5.0.0 validate --spec=draft7 --strict=false \
+            -s "$RUNNER_TEMP/feature.schema.json" -d 'src/*/devcontainer-feature.json'
       - name: Test installed lifecycle scripts without workspace feature sources
         run: docker run --rm -v "$PWD:/repo:ro" mcr.microsoft.com/devcontainers/python:3.14-trixie bash /repo/tools/runtime-tests/runtime.sh
   version-bump:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Require a metadata version bump for every changed feature package
@@ -43,8 +50,8 @@ jobs:
       matrix:
         feature: [aws-session-manager-plugin, bedrock, chat, claude, codex, grok, herdr, oh-my-logo, opencode, pi, playwright, pure-prompt, sei-certs, shell-completions, shell-history, tmux]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: npm install -g @devcontainers/cli@0.87.0
