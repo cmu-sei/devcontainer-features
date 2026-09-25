@@ -1,0 +1,11 @@
+{
+  "version": "1.2.835.0",
+  "assets": {
+    "amd64": "https://s3.amazonaws.com/session-manager-downloads/plugin/1.2.835.0/ubuntu_64bit/session-manager-plugin.deb",
+    "arm64": "https://s3.amazonaws.com/session-manager-downloads/plugin/1.2.835.0/ubuntu_arm64/session-manager-plugin.deb"
+  },
+  "sha256": {
+    "amd64": "7c6dcad12518571cc7959a713e6a8ae1bdf6ed66fd9bee37dc189e39ca58ae03",
+    "arm64": "0add94c4c8b6ca63f26e44fd655d662b0f6455a268b5b9ebebee0f462214e928"
+  }
+}

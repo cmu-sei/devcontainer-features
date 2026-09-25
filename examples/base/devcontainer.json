@@ -15,6 +15,7 @@
       "upgradePackages": false
     },
     "ghcr.io/devcontainers/features/node:2": {},
+    "ghcr.io/cmu-sei/devcontainer-features/aws-session-manager-plugin:1": {},
     "ghcr.io/cmu-sei/devcontainer-features/bedrock:1": {},
     "ghcr.io/cmu-sei/devcontainer-features/chat:1": {},
     "ghcr.io/cmu-sei/devcontainer-features/claude:1": {},
