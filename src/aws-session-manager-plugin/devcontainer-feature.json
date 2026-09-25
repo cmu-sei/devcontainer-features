@@ -1,0 +1,9 @@
+{
+    "id": "aws-session-manager-plugin",
+    "version": "1.0.0",
+    "name": "AWS Session Manager plugin",
+    "description": "Installs the AWS Session Manager plugin for aws ssm start-session, along with the AWS CLI it extends",
+    "dependsOn": {
+        "ghcr.io/devcontainers/features/aws-cli:1": {}
+    }
+}

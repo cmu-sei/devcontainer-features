@@ -13,6 +13,7 @@ Registry (GHCR) before using the registry references in the examples.
 
 | Feature | Purpose |
 | --- | --- |
+| [aws-session-manager-plugin](src/aws-session-manager-plugin/README.md) | AWS Session Manager plugin, pinned by checksum, with the AWS CLI it extends. |
 | [bedrock](src/bedrock/README.md) | Read-only checks of Bedrock account retention and GovCloud model availability. |
 | [chat](src/chat/README.md) | LiteLLM, Open WebUI, Open Terminal, SearXNG, and supervisord as one bundle. |
 | [claude](src/claude/README.md) | Claude Code with organizational defaults and persistent user state. |
@@ -206,8 +207,9 @@ settings and model entitlements before use.
 
 Feature package versions start at `1.0.0`. Claude, Codex, Grok, OpenCode, Pi,
 Oh My Logo, and Playwright expose a tool `version` option with a pinned default.
-Herdr uses a checked-in release manifest and checksums, Pure is pinned to a
-commit, and Chat pins its bundle dependencies. Installers run during image builds.
+Herdr and the AWS Session Manager plugin use checked-in release manifests and
+checksums, Pure is pinned to a commit, and Chat pins its bundle dependencies.
+Installers run during image builds.
 Claude's automatic updater is disabled; users can still update tools manually.
 
 To release an update:
