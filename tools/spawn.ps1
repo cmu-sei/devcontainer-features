@@ -15,7 +15,7 @@ param(
     [switch]$Chat
 )
 
-# Release assets built by .github/workflows/release-bundle.yml. The zip unpacks to a
+# Release assets built by .github/workflows/release.yml. The zip unpacks to a
 # top-level .devcontainer\; releases/latest/download always serves the newest release.
 $ReleasesUrl = "https://github.com/cmu-sei/devcontainer-features/releases"
 $Asset = "devcontainer.zip"
