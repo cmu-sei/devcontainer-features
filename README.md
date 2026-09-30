@@ -221,7 +221,8 @@ To release an update:
 2. Merge a pull request to `main`. The **Release** workflow reruns the tests, publishes
    bumped features, and releases the bundle with the largest feature bump since the
    latest `v*` tag. An added feature is minor, a removed one major, and a bundle or
-   spawn-script change with no feature bump is a patch.
+   spawn-script change with no feature bump is a patch. There is no manual release step;
+   do not push `v*` tags by hand. If a release fails, rerun the workflow.
 3. Rebuild consumers to resolve the new `:1` artifact. If consumers use exact versions or
    a feature lockfile, update those first. Existing containers do not hot-update.
 
