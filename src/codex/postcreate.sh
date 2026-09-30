@@ -24,6 +24,15 @@ if [ -d "$home_dir" ] && [ ! -L "$home_dir" ]; then
     if [ -z "$(ls -A "$vol_dir" 2>/dev/null)" ]; then
         cp -a "$home_dir/." "$vol_dir/"
     fi
+    # Codex only detects its updater when packages live under the real ~/.codex, so
+    # the image's pinned release replaces any saved one (also drops old releases).
+    if [ -d "$home_dir/packages/standalone" ]; then
+        rm -rf "$vol_dir/packages/standalone"
+        mkdir -p "$vol_dir/packages"
+        cp -a "$home_dir/packages/standalone" "$vol_dir/packages/"
+    fi
+    # Links into the old container's /tmp (e.g. the app-server socket) break the daemon.
+    find "$vol_dir" -maxdepth 2 -xtype l -delete
     rm -rf "$home_dir"
 fi
 ln -sfn "$vol_dir" "$home_dir"

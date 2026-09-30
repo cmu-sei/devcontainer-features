@@ -22,4 +22,7 @@ the model picker. Existing user model/provider settings still take precedence.
 See the [Codex changelog](https://learn.chatgpt.com/docs/changelog) and
 [AWS model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-1-sol.html).
 
+Codex keeps its packages in `~/.codex` (persisted at `~/.data/codex`) so `codex update`
+works. Rebuilding resets Codex to the pinned `version` and removes other saved releases.
+
 See the [collection README](../../README.md) for the supported base, profiles, persistence, and release process.

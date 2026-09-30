@@ -88,6 +88,46 @@ class RuntimeTests(unittest.TestCase):
         self.hook('codex')
         self.assertEqual((fresh_home / '.codex/auth.json').read_text(), '{"test": "retained"}')
 
+    def codex_package(self, codex_home, version):
+        # Mirror the official installer: absolute links through ~/.codex.
+        root = codex_home / 'packages/standalone'
+        binary = root / 'releases' / version / 'bin/codex'
+        binary.parent.mkdir(parents=True)
+        binary.write_text(f'#!/bin/bash\necho "codex-cli {version}"\n')
+        binary.chmod(0o755)
+        (root / 'current').symlink_to(self.home / '.codex/packages/standalone/releases' / version)
+        launcher = self.home / '.local/bin/codex'
+        launcher.parent.mkdir(parents=True, exist_ok=True)
+        launcher.unlink(missing_ok=True)
+        launcher.symlink_to(self.home / '.codex/packages/standalone/current/bin/codex')
+
+    def assert_codex_version(self, version):
+        result = subprocess.run([str(self.home / '.local/bin/codex')], env=self.env,
+                                capture_output=True, text=True, check=True)
+        self.assertEqual(result.stdout.strip(), f'codex-cli {version}')
+        releases = self.home / '.data/codex/packages/standalone/releases'
+        self.assertEqual([p.name for p in releases.iterdir()], [version])
+
+    def test_codex_seeds_empty_volume_and_repeats(self):
+        self.codex_package(self.home / '.codex', '1.2.3')
+        for _ in range(2):
+            self.hook('codex')
+            self.assert_codex_version('1.2.3')
+
+    def test_codex_image_package_replaces_saved_releases(self):
+        saved = self.home / '.data/codex'
+        self.codex_package(saved, '0.0.1')
+        (saved / 'auth.json').write_text('{"test": "retained"}')
+        # The app-server links its socket into /tmp, which a rebuild wipes.
+        stale = saved / 'app-server-control/app-server-control.sock'
+        stale.parent.mkdir()
+        stale.symlink_to(self.root / 'old-container-tmp/socket')
+        self.codex_package(self.home / '.codex', '1.2.3')
+        self.hook('codex')
+        self.assert_codex_version('1.2.3')
+        self.assertEqual((self.home / '.codex/auth.json').read_text(), '{"test": "retained"}')
+        self.assertFalse(stale.is_symlink())
+
     def test_empty_environment_overrides_legacy_selector(self):
         (self.config / 'devcontainer.env').write_text('CONFIGURED_PROFILES=sample\n')
         folder = self.profiles / 'sample'
