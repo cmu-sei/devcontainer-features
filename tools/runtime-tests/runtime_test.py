@@ -118,19 +118,21 @@ class RuntimeTests(unittest.TestCase):
         saved = self.home / '.data/codex'
         self.codex_package(saved, '0.0.1')
         (saved / 'auth.json').write_text('{"test": "retained"}')
-        # The app-server links its socket into /tmp, which a rebuild wipes.
+        # The app-server socket link from before ~/.codex moved onto the volume.
         stale = saved / 'app-server-control/app-server-control.sock'
         stale.parent.mkdir()
         stale.symlink_to('/tmp/codex-daemon-old-container/socket')
-        # A user link whose target is created later (e.g. by dotfiles) must survive.
-        user_link = saved / 'AGENTS.md'
-        user_link.symlink_to('/opt/dotfiles-not-yet-installed/AGENTS.md')
+        # Dangling user links, even into /tmp, must survive.
+        user_links = [saved / 'AGENTS.md', saved / 'scratch']
+        user_links[0].symlink_to('/opt/dotfiles-not-yet-installed/AGENTS.md')
+        user_links[1].symlink_to('/tmp/missing')
         self.codex_package(self.home / '.codex', '1.2.3')
         self.hook('codex')
         self.assert_codex_version('1.2.3')
         self.assertEqual((self.home / '.codex/auth.json').read_text(), '{"test": "retained"}')
         self.assertFalse(stale.is_symlink())
-        self.assertTrue(user_link.is_symlink())
+        for link in user_links:
+            self.assertTrue(link.is_symlink(), link)
 
     def test_empty_environment_overrides_legacy_selector(self):
         (self.config / 'devcontainer.env').write_text('CONFIGURED_PROFILES=sample\n')

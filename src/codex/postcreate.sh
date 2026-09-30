@@ -31,10 +31,12 @@ if [ -d "$home_dir" ] && [ ! -L "$home_dir" ]; then
         mkdir -p "$vol_dir/packages"
         cp -a "$home_dir/packages/standalone" "$vol_dir/packages/"
     fi
-    # The app-server daemon links its socket into /tmp, which a rebuild wipes, and fails
-    # with "File exists" on the dangling link. Only /tmp links are removed so user links
-    # whose targets appear later in create survive. Drop once Codex replaces stale links.
-    find "$vol_dir" -maxdepth 2 -xtype l -lname '/tmp/*' -delete
+    # Moving ~/.codex onto the volume changes the socket's /tmp target, and Codex fails with
+    # "File exists" on the old dangling link. Only that link is removed.
+    sock="$vol_dir/app-server-control/app-server-control.sock"
+    if [ -L "$sock" ] && [ ! -e "$sock" ] && [[ "$(readlink "$sock")" == /tmp/* ]]; then
+        rm -f "$sock"
+    fi
     rm -rf "$home_dir"
 fi
 ln -sfn "$vol_dir" "$home_dir"
