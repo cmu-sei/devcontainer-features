@@ -121,12 +121,16 @@ class RuntimeTests(unittest.TestCase):
         # The app-server links its socket into /tmp, which a rebuild wipes.
         stale = saved / 'app-server-control/app-server-control.sock'
         stale.parent.mkdir()
-        stale.symlink_to(self.root / 'old-container-tmp/socket')
+        stale.symlink_to('/tmp/codex-daemon-old-container/socket')
+        # A user link whose target is created later (e.g. by dotfiles) must survive.
+        user_link = saved / 'AGENTS.md'
+        user_link.symlink_to('/opt/dotfiles-not-yet-installed/AGENTS.md')
         self.codex_package(self.home / '.codex', '1.2.3')
         self.hook('codex')
         self.assert_codex_version('1.2.3')
         self.assertEqual((self.home / '.codex/auth.json').read_text(), '{"test": "retained"}')
         self.assertFalse(stale.is_symlink())
+        self.assertTrue(user_link.is_symlink())
 
     def test_empty_environment_overrides_legacy_selector(self):
         (self.config / 'devcontainer.env').write_text('CONFIGURED_PROFILES=sample\n')

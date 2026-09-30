@@ -31,8 +31,10 @@ if [ -d "$home_dir" ] && [ ! -L "$home_dir" ]; then
         mkdir -p "$vol_dir/packages"
         cp -a "$home_dir/packages/standalone" "$vol_dir/packages/"
     fi
-    # Links into the old container's /tmp (e.g. the app-server socket) break the daemon.
-    find "$vol_dir" -maxdepth 2 -xtype l -delete
+    # The app-server daemon links its socket into /tmp, which a rebuild wipes, and fails
+    # with "File exists" on the dangling link. Only /tmp links are removed so user links
+    # whose targets appear later in create survive. Drop once Codex replaces stale links.
+    find "$vol_dir" -maxdepth 2 -xtype l -lname '/tmp/*' -delete
     rm -rf "$home_dir"
 fi
 ln -sfn "$vol_dir" "$home_dir"
