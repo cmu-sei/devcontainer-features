@@ -39,7 +39,7 @@ Registry (GHCR) before using the registry references in the examples.
 | `bundle/` | The complete `.devcontainer/` a spawned project receives: Dockerfile, `devcontainer.json` referencing the published features, provider profiles, and the setup/lifecycle scripts. Released as `devcontainer.tar.gz` and `devcontainer.zip`. |
 | `tools/` | Maintainer tooling: shared helper source (`lib/`), sync/validation scripts, and offline lifecycle regression tests (`runtime-tests/`). Also the spawn scripts (`spawn.sh`, `spawn.ps1`), which users download from the release rather than from a checkout. |
 | `examples/` | Example consumer configuration. |
-| `.github/workflows/` | Validation (`test.yml`) and the automatic feature publish and bundle release on every push to `main` (`release.yml`). |
+| `.github/workflows/` | Validation (`test.yml`) and the feature and bundle release on each push to `main` (`release.yml`). |
 
 ## Requirements
 
@@ -218,15 +218,11 @@ To release an update:
    `version`. Published exact feature versions are never rebuilt; the test workflow
    fails a pull request that changes a package without bumping it. A change to `tools/lib/`
    is copied into every package and requires a version bump for each.
-2. Open a pull request. `main` accepts changes only through pull requests that pass
-   validation, the feature tests, and the version-bump check.
-3. Merge. The **Release** workflow publishes the new feature versions to GHCR, then
-   releases the bundle. The bundle tag takes the largest feature bump since the latest
-   `v*` tag: a minor feature bump makes a minor bundle release, and so on. An added
-   feature is a minor bump and a removed one is major. Changes to `bundle/` or the spawn
-   scripts with no feature bump make a patch release. Other changes do not release.
-   `python3 tools/next-bundle-version.py` prints the tag the next release would use.
-4. Rebuild consumers to resolve the new `:1` artifact. If consumers use exact versions or
+2. Merge a pull request to `main`. The **Release** workflow reruns the tests, publishes
+   bumped features, and releases the bundle with the largest feature bump since the
+   latest `v*` tag. An added feature is minor, a removed one major, and a bundle or
+   spawn-script change with no feature bump is a patch.
+3. Rebuild consumers to resolve the new `:1` artifact. If consumers use exact versions or
    a feature lockfile, update those first. Existing containers do not hot-update.
 
 The registry tag (`:1`, `:1.0.0`) selects the feature package. The `version` option
@@ -247,9 +243,8 @@ A public index listing is optional.
 The documented namespace requires this repository to be hosted at
 `cmu-sei/devcontainer-features` with GitHub Actions enabled. The
 [Release workflow](.github/workflows/release.yml) grants its publishing job
-`packages: write` and runs on every push to `main`; branch protection ensures those
-commits passed the tests in their pull request. Run it manually to retry a failed
-release. It uses the repository's `GITHUB_TOKEN`.
+`packages: write` and runs on each push to `main`, after its tests pass. It uses the
+repository's `GITHUB_TOKEN`.
 
 ## Development and verification
 
@@ -271,8 +266,7 @@ bash tools/test-base.sh YOUR-CERTIFICATE-ENABLED-BASE
 
 Edit shared helpers in `tools/lib/`, then regenerate the copies packaged in `src/*/`.
 Validation rejects stale copies. Each feature archive must be self-contained: do not
-source files outside its directory. CI tests each feature, and branch protection requires
-those tests to pass before a pull request merges.
+source files outside its directory. CI tests each feature and gates releases on success.
 
 The installation tests do not exercise live provider authentication, Bedrock inference,
 or browser-chat conversations.

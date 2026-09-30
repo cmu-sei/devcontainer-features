@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Print the next bundle release tag, or nothing if HEAD needs no release.
-
-The bundle version follows the feature versions: the largest feature bump since the
-latest v* tag (major, minor, or patch) is applied to that tag. An added feature counts
-as minor and a removed one as major. A change to the bundle or spawn scripts with no
-feature bump is a patch. Any other change (docs, tests, CI) does not release.
-"""
+"""Print the next bundle tag: the largest feature bump since the latest v* tag, or nothing."""
 import json
 import subprocess
 import sys
