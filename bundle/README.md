@@ -143,12 +143,13 @@ You can extend Claude Code's behavior with reusable prompt instructions by addin
 
 You can install and manage skills yourself at any time with `npx skills add <owner/repo>`, `npx skills find <query>`, and `npx skills list` — add `-g` to install at user scope alongside find-skills instead of into the project. To drop find-skills for the current container, run `npx skills remove -g -s find-skills -y`; the next create reinstalls it.
 
-## GPT-6 Sol and Luna on AWS
+## OpenAI models on commercial AWS
 
-The `aws` profile defaults Codex to **GPT-6 Sol** (`us.openai.gpt-6-sol`), with
+The `aws` profile defaults Codex to **GPT-6.1 Sol** (`us.openai.gpt-6.1-sol`), with
 **GPT-6 Luna** also available in `/model`. Both use Bedrock Runtime in `us-east-1`
 with the profile's existing AWS credentials. Astra and GPT-5.6 Terra remain
-available; GPT-5.6 Sol and Luna are removed from the AWS selections and chat list.
+available in the installed CLI catalog. GPT-6.1 Sol launched on commercial
+Bedrock on September 29, 2026; this release does not imply 6.1 Astra or Luna models.
 User settings in `~/.codex/config.toml` take precedence over the profile;
 use `/model` to change an existing selection.
 
@@ -159,11 +160,18 @@ with low reasoning effort by default and per-chat overrides supported.
 Pi 0.87.0 uses the models' default reasoning on this route; its thinking selector
 does not send an OpenAI reasoning-effort override.
 
-Codex 0.156.0 and OpenCode's current Bedrock catalog do not yet list the new
-models. The container supplies OpenCode entries and generates complete Codex entries
-from the installed binary's predecessor templates until native entries arrive.
-Codex keeps those templates' context and compaction settings; Pi and OpenCode declare
-the models' 1,050,000-token context and 128,000-token output limits.
+Codex is pinned to **0.159.2**. Native GPT-6.1 Sol entries were added to the
+Bedrock Runtime and Mantle catalogs in 0.159.1. The container generates its picker
+from the installed CLI and removes `global.*` entries, preserving the US-only
+`us.openai.gpt-6.1-sol` entry and its upstream metadata. No predecessor templates
+are needed. GPT-6.1 Sol is also served by Mantle in `us-east-1` as
+`openai.gpt-6.1-sol`; it has no global inference profile at launch.
+See the [Codex changelog](https://learn.chatgpt.com/docs/changelog) and
+[AWS GPT-6.1 Sol model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-1-sol.html).
+
+Pi, OpenCode, and the optional chat stack retain their GPT-6 Sol/Luna selections.
+Pi and OpenCode declare those models' 1,050,000-token context and 128,000-token
+output limits.
 Displayed costs use commercial US rates, including the regional premium.
 See the official [Sol](https://developers.openai.com/api/docs/models/gpt-6-sol),
 [Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), and
