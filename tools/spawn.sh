@@ -5,7 +5,7 @@
 # connection then fails as a syntax error instead of running a truncated script.
 {
 
-# Release assets built by .github/workflows/release-bundle.yml. The tarball unpacks to a
+# Release assets built by .github/workflows/release.yml. The tarball unpacks to a
 # top-level .devcontainer/; releases/latest/download always serves the newest release.
 RELEASES_URL="https://github.com/cmu-sei/devcontainer-features/releases"
 ASSET="devcontainer.tar.gz"

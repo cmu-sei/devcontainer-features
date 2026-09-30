@@ -1,13 +1,20 @@
-name: Publish features
+name: Release
+# Every commit on main arrives through a pull request that passed test.yml (branch
+# protection), so this publishes without re-running the feature tests. Both jobs are
+# idempotent: the CLI skips feature versions already in GHCR, and the bundle job only
+# releases when next-bundle-version.py finds changes since the latest v* tag. Run it
+# manually to retry a failed release.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: release
+  cancel-in-progress: false
 jobs:
-  test:
-    uses: ./.github/workflows/test.yml
-  publish:
-    needs: test
+  features:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -25,3 +32,41 @@ jobs:
         run: devcontainer features publish --registry ghcr.io --namespace "$GITHUB_REPOSITORY" ./src
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # Runs after the features publish so a released bundle never references a feature
+  # version that is not in GHCR yet.
+  bundle:
+    needs: features
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Compute the bundle version
+        id: version
+        run: |
+          tag=$(python3 tools/next-bundle-version.py)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "${tag:-No bundle release needed.}"
+      - name: Package ./bundle as tar.gz and zip, plus the spawn scripts
+        if: steps.version.outputs.tag
+        # git archive ships only tracked files (honoring .gitignore) and keeps
+        # the executable bit on scripts in both formats.
+        run: |
+          mkdir -p dist
+          # Unversioned asset names keep releases/latest/download/<asset> stable;
+          # the release tag carries the version.
+          name="devcontainer"
+          git archive --format=tar.gz --prefix=.devcontainer/ -o "dist/$name.tar.gz" HEAD:bundle
+          git archive --format=zip --prefix=.devcontainer/ -o "dist/$name.zip" HEAD:bundle
+          # The spawn scripts ship with the bundle they download, so
+          # `curl .../releases/latest/download/spawn.sh | bash -s -- <target>` works.
+          cp tools/spawn.sh tools/spawn.ps1 dist/
+          (cd dist && sha256sum "$name.tar.gz" "$name.zip" spawn.sh spawn.ps1 > "$name.sha256")
+          tar -tzvf "dist/$name.tar.gz"
+      - name: Create the release and tag
+        if: steps.version.outputs.tag
+        run: gh release create "${{ steps.version.outputs.tag }}" dist/* --target "$GITHUB_SHA" --title "${{ steps.version.outputs.tag }}" --generate-notes
