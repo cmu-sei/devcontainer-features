@@ -72,6 +72,32 @@ if ! jq -e '.permissions.defaultMode' "$CLAUDE_SETTINGS" &>/dev/null; then
         && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
 fi
 
+# --- Bedrock model pins ---
+# On Bedrock, Claude Code resolves each /model tier from ANTHROPIC_DEFAULT_*_MODEL and
+# otherwise falls back to its own per-tier defaults, which can lag the newest enabled
+# model. Pinned only when Bedrock is in use, since these IDs are Bedrock inference
+# profiles. Written on every create so a pin bump reaches an existing container. A key
+# already set in the container environment is skipped (a settings `env` entry would
+# replace it), and the profile merge below runs afterwards, so profiles win.
+# The feature's `bedrock` option (recorded at build time as bedrock-enabled) also
+# writes CLAUDE_CODE_USE_BEDROCK.
+USE_BEDROCK="${CLAUDE_CODE_USE_BEDROCK:-}"
+[ -f "$SCRIPT_DIR/bedrock-enabled" ] && [ -z "$USE_BEDROCK" ] && USE_BEDROCK=1
+case "$USE_BEDROCK" in
+    ''|0|false) ;;
+    *)
+        if [ -f "$SCRIPT_DIR/bedrock-models.json" ]; then
+            jq --slurpfile pins "$SCRIPT_DIR/bedrock-models.json" \
+                --arg flag "$([ -f "$SCRIPT_DIR/bedrock-enabled" ] && echo 1)" \
+                '.env = ((.env // {})
+                    + ($pins[0].env + (if $flag == "1" then {CLAUDE_CODE_USE_BEDROCK: "1"} else {} end)
+                       | with_entries(select($ENV[.key] == null))))' \
+                "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" \
+                && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
+        fi
+        ;;
+esac
+
 # --- Claude Code config from the configured profiles (pinned models) ---
 # Claude Code's pinned-model vars are env-only — none of them has a dedicated
 # settings key — so they are merged into the USER settings file's `env` block,
