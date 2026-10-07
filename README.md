@@ -184,8 +184,9 @@ before it can start.
 ### Configuration defaults
 
 - `claude` seeds `permissions.defaultMode: "auto"` and empty commit/PR attribution
-  into the user's settings (once; later user edits win), disables Claude Code's
-  auto-updater, and sets VS Code's `chat.disableAIFeatures` in workspaces that use it.
+  into the user's settings (once; later user edits win), pins Bedrock model
+  tiers when its `bedrock` option is on or `CLAUDE_CODE_USE_BEDROCK` is set (see the [claude README](src/claude/README.md)),
+  and sets VS Code's `chat.disableAIFeatures` in workspaces that use it.
 - `chat` binds its services to container loopback and disables Open WebUI login.
   Keep forwarded ports private; the configuration assumes a single-user container.
 - Every feature ensures `curl`, `jq`, `git`, `sudo`, and `zsh` are installed.
@@ -210,7 +211,7 @@ Oh My Logo, and Playwright expose a tool `version` option with a pinned default.
 Herdr and the AWS Session Manager plugin use checked-in release manifests and
 checksums, Pure is pinned to a commit, and Chat pins its bundle dependencies.
 Installers run during image builds.
-Claude's automatic updater is disabled; users can still update tools manually.
+Claude Code keeps its automatic updater, so it updates itself past the pinned version.
 
 To release an update:
 

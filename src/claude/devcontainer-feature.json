@@ -1,6 +1,6 @@
 {
     "id": "claude",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "name": "Claude Code",
     "description": "Installs the Claude Code CLI via the official installer script",
     "installsAfter": [
@@ -20,11 +20,13 @@
     "options": {
         "version": {
             "type": "string",
-            "default": "2.1.280",
+            "default": "2.1.292",
             "description": "Exact upstream tool version installed at image build time."
+        },
+        "bedrock": {
+            "type": "boolean",
+            "default": false,
+            "description": "Use Amazon Bedrock: sets CLAUDE_CODE_USE_BEDROCK=1 in Claude Code settings, so the container need not."
         }
-    },
-    "containerEnv": {
-        "DISABLE_AUTOUPDATER": "1"
     }
 }
