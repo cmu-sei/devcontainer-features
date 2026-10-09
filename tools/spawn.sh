@@ -15,9 +15,14 @@ TARGET_DIR=""
 INIT_GIT=false
 VERSION=""
 CHAT=false
+# Root CAs copied into every spawned project's .devcontainer/certs/ (see "Certificates"
+# below). A folder named for this tool, not a generic ~/.config/certs: every *.crt found is
+# trusted as a ROOT in the container, so it must hold nothing but the roots meant for it.
+CERTS_DEFAULT="${XDG_CONFIG_HOME:-$HOME/.config}/devcontainer-certs"
+CERTS_DIR=""
 
 usage() {
-    echo "Usage: spawn.sh [<target-directory>] [--git] [--version <tag>] [--chat]"
+    echo "Usage: spawn.sh [<target-directory>] [--git] [--version <tag>] [--chat] [--certs <dir>]"
     echo "   or: curl -fsSL $RELEASES_URL/latest/download/spawn.sh | bash -s -- [<target-directory>] [options]"
     echo ""
     echo "Downloads the latest released dev container bundle, then runs its setup to pick the"
@@ -37,6 +42,9 @@ usage() {
     echo "  --chat               Preselect the browser-chat stack (LiteLLM, Open WebUI, Open Terminal,"
     echo "                       SearXNG, supervisord) in the feature prompt. Off by default for a"
     echo "                       leaner, faster build"
+    echo "  --certs <dir>        Copy the root CA certificates (*.crt) in <dir> into the project's"
+    echo "                       .devcontainer/certs/, to be trusted in the container"
+    echo "                       (default: $CERTS_DEFAULT, when it exists)"
 }
 
 while [ $# -gt 0 ]; do
@@ -54,6 +62,15 @@ while [ $# -gt 0 ]; do
                 exit 1
             fi
             VERSION="$2"
+            shift
+            ;;
+        --certs)
+            if [ -z "${2:-}" ]; then
+                echo "Error: '$1' requires a directory."
+                usage
+                exit 1
+            fi
+            CERTS_DIR="$2"
             shift
             ;;
         -*)
@@ -94,6 +111,16 @@ if [ -n "$VERSION" ]; then
     ARCHIVE_URL="$RELEASES_URL/download/$VERSION/$ASSET"
 else
     ARCHIVE_URL="$RELEASES_URL/latest/download/$ASSET"
+fi
+
+# A folder named on the command line has to exist; the default is optional.
+if [ -n "$CERTS_DIR" ]; then
+    if [ ! -d "$CERTS_DIR" ]; then
+        echo "Error: certificate folder '$CERTS_DIR' does not exist."
+        exit 1
+    fi
+elif [ -d "$CERTS_DEFAULT" ]; then
+    CERTS_DIR="$CERTS_DEFAULT"
 fi
 
 # Check required tools
@@ -267,6 +294,28 @@ rm -f "$PAYLOAD/.template-container"
 # initializeCommand executes this one directly, so its exec bit is load-bearing and must
 # not depend on what the archive happened to store.
 chmod +x "$PAYLOAD/.devcontainer/scripts/init" 2>/dev/null
+
+# --- Certificates ---
+# The machine's root CAs (a TLS-inspecting proxy's, typically) go into the staged
+# .devcontainer/certs/, which the Dockerfile copies into the image for the custom-certs
+# feature to trust before any other feature downloads anything. Copied, not linked: the
+# image build only sees the project. Only *.crt, the one extension update-ca-certificates
+# reads. In adoption they travel with .devcontainer/, like everything else here.
+if [ -n "$CERTS_DIR" ]; then
+    CERTS=()
+    for CERT in "$CERTS_DIR"/*.crt; do
+        [ -f "$CERT" ] && CERTS+=("$CERT")
+    done
+    if [ "${#CERTS[@]}" -eq 0 ]; then
+        echo "No *.crt files in '$CERTS_DIR'; no certificates added."
+    elif mkdir -p "$PAYLOAD/.devcontainer/certs" &&
+        cp "${CERTS[@]}" "$PAYLOAD/.devcontainer/certs/"; then
+        echo "Added ${#CERTS[@]} certificate(s) from '$CERTS_DIR' to .devcontainer/certs/."
+    else
+        echo "Failed to copy certificates from '$CERTS_DIR'."
+        exit 1
+    fi
+fi
 
 # --- Profile, feature, CUI and credential selection (pre-container) ---
 # Hand off to the project's own setup script rather than duplicating any of it here:
