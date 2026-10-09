@@ -214,6 +214,23 @@ class RuntimeTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(marker.exists())
 
+    def test_grok_update_prunes_unused_downloads(self):
+        self.hook('grok')
+        bin_dir = self.home / '.local/bin'
+        bin_dir.mkdir(parents=True)
+        (bin_dir / 'grok').write_text('#!/bin/bash\nexit 0\n')
+        (bin_dir / 'grok').chmod(0o755)
+        downloads = self.home / '.grok/downloads'
+        downloads.mkdir()
+        for name in ['grok-linux-x86_64', 'grok-1.0.50-linux-x86_64']:
+            (downloads / name).write_text(name)
+        for link in ['grok', 'agent']:
+            path = self.home / '.grok/bin' / link
+            path.unlink(missing_ok=True)
+            path.symlink_to('../downloads/grok-1.0.50-linux-x86_64')
+        self.hook('grok', 'self-update')
+        self.assertEqual([p.name for p in downloads.iterdir()], ['grok-1.0.50-linux-x86_64'])
+
     def test_shell_history_seeds_volume_once(self):
         (self.home / '.zsh_history').write_text(': 1:0;from-image\n')
         self.hook('shell-history')
