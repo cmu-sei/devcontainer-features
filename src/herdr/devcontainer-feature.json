@@ -1,8 +1,8 @@
 {
     "id": "herdr",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "name": "Herdr",
-    "description": "Installs the pinned Herdr terminal workspace manager with verified release checksums",
+    "description": "Installs the Herdr terminal workspace manager via the official installer script",
     "installsAfter": [
         "ghcr.io/devcontainers/features/common-utils"
     ],

@@ -1,17 +1,18 @@
 {
     "id": "pi",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "name": "Pi Coding Agent",
     "description": "Installs the Pi Coding Agent CLI via npm",
     "postCreateCommand": "bash -l /usr/local/share/org-features/pi/postcreate.sh",
+    "postStartCommand": "bash -l /usr/local/share/org-features/pi/poststart.sh",
     "dependsOn": {
         "ghcr.io/devcontainers/features/node:2": {}
     },
     "options": {
         "version": {
             "type": "string",
-            "default": "0.87.0",
-            "description": "Exact upstream tool version installed at image build time."
+            "default": "",
+            "description": "Exact upstream tool version to pin at image build time. Leave empty to install the latest release."
         }
     }
 }

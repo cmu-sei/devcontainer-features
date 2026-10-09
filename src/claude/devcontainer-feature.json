@@ -1,12 +1,13 @@
 {
     "id": "claude",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "name": "Claude Code",
     "description": "Installs the Claude Code CLI via the official installer script",
     "installsAfter": [
         "ghcr.io/devcontainers/features/common-utils"
     ],
     "postCreateCommand": "bash -l /usr/local/share/org-features/claude/postcreate.sh",
+    "postStartCommand": "bash -l /usr/local/share/org-features/claude/poststart.sh",
     "customizations": {
         "vscode": {
             "extensions": [
@@ -20,8 +21,8 @@
     "options": {
         "version": {
             "type": "string",
-            "default": "2.1.292",
-            "description": "Exact upstream tool version installed at image build time."
+            "default": "",
+            "description": "Exact upstream tool version to pin at image build time. Leave empty to install the latest release."
         },
         "bedrock": {
             "type": "boolean",

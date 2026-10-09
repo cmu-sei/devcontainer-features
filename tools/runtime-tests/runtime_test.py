@@ -5,6 +5,7 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 
 ASSETS = pathlib.Path('/usr/local/share/org-features')
@@ -20,7 +21,7 @@ class RuntimeTests(unittest.TestCase):
         self.home.mkdir()
         self.workspace.mkdir()
         self.profiles.mkdir(parents=True)
-        self.env = dict(os.environ, HOME=str(self.home), ORG_DEVCONTAINER_DIR=str(self.config), CONFIGURED_PROFILES='', CHAT_AUTOSTART='0',
+        self.env = dict(os.environ, HOME=str(self.home), ORG_DEVCONTAINER_DIR=str(self.config), CONFIGURED_PROFILES='', CHAT_AUTOSTART='0', ORG_FEATURES_AUTO_UPDATE='false',
                         SHELL_COMPLETIONS_PREFIX=str(self.root / 'completions'))
         self.addCleanup(self.temp.cleanup)
 
@@ -53,22 +54,6 @@ class RuntimeTests(unittest.TestCase):
         settings = json.loads((self.home / '.claude/settings.json').read_text())
         self.assertEqual(settings['env']['MODEL'], 'two')
 
-    def test_claude_bedrock_model_pins(self):
-        self.hook('claude')
-        settings = json.loads((self.home / '.claude/settings.json').read_text())
-        self.assertNotIn('ANTHROPIC_DEFAULT_OPUS_MODEL', settings.get('env', {}))
-        self.env.update(CLAUDE_CODE_USE_BEDROCK='1', ANTHROPIC_DEFAULT_HAIKU_MODEL='from-container',
-                        CONFIGURED_PROFILES='aws')
-        folder = self.profiles / 'aws'
-        folder.mkdir()
-        (folder / 'claude.json').write_text(json.dumps({'env': {'ANTHROPIC_DEFAULT_SONNET_MODEL': 'from-profile'}}))
-        self.hook('claude')
-        env = json.loads((self.home / '.claude/settings.json').read_text())['env']
-        self.assertEqual(env['ANTHROPIC_DEFAULT_OPUS_MODEL'], 'us.anthropic.claude-opus-5-5')
-        self.assertEqual(env['ANTHROPIC_DEFAULT_SONNET_MODEL'], 'from-profile')
-        self.assertNotIn('ANTHROPIC_DEFAULT_HAIKU_MODEL', env)
-        self.assertNotIn('CLAUDE_CODE_USE_BEDROCK', env)
-
     def test_claude_bedrock_option(self):
         # The option leaves a build-time marker in the installed assets; use a copy.
         assets = self.root / 'claude-assets'
@@ -77,7 +62,13 @@ class RuntimeTests(unittest.TestCase):
         subprocess.run(['bash', str(assets / 'postcreate.sh')], cwd=self.workspace, env=self.env, check=True)
         env = json.loads((self.home / '.claude/settings.json').read_text())['env']
         self.assertEqual(env['CLAUDE_CODE_USE_BEDROCK'], '1')
-        self.assertEqual(env['ANTHROPIC_DEFAULT_OPUS_MODEL'], 'us.anthropic.claude-opus-5-5')
+        self.assertNotIn('ANTHROPIC_DEFAULT_OPUS_MODEL', env)
+        # A value in the container environment wins over the option.
+        self.env['CLAUDE_CODE_USE_BEDROCK'] = '0'
+        (self.home / '.claude/settings.json').write_text('{}')
+        subprocess.run(['bash', str(assets / 'postcreate.sh')], cwd=self.workspace, env=self.env, check=True)
+        env = json.loads((self.home / '.claude/settings.json').read_text()).get('env', {})
+        self.assertNotIn('CLAUDE_CODE_USE_BEDROCK', env)
 
     def test_legacy_env_file_crlf(self):
         self.env.pop('CONFIGURED_PROFILES')
@@ -179,7 +170,7 @@ class RuntimeTests(unittest.TestCase):
         result = self.hook('bedrock')
         self.assertIn('(unchanged)', result.stdout)
 
-    def test_herdr_skill_uses_bundled_release(self):
+    def test_herdr_skill_comes_from_installed_binary(self):
         self.hook('herdr')
         self.hook('claude')
         bin_dir = self.home / '.local/bin'
@@ -188,10 +179,74 @@ class RuntimeTests(unittest.TestCase):
             binary = bin_dir / name
             binary.write_text('#!/bin/bash\nexit 0\n')
             binary.chmod(0o755)
+        (bin_dir / 'herdr').write_text('#!/bin/bash\n[ "$1" = --skill ] && echo "herdr skill"\nexit 0\n')
         self.hook('herdr', 'poststart')
-        expected = (ASSETS / 'herdr/herdr-skill.md').read_text()
+        expected = 'herdr skill\n'
         self.assertEqual((self.home / '.claude/skills/herdr/SKILL.md').read_text(), expected)
         self.assertEqual((self.home / '.agents/skills/herdr/SKILL.md').read_text(), expected)
+
+    def test_poststart_updates_in_background(self):
+        bin_dir = self.home / '.local/bin'
+        bin_dir.mkdir(parents=True)
+        marker = self.root / 'updated'
+        (bin_dir / 'codex').write_text(f'#!/bin/bash\n[ "$*" = update ] && sleep 1 && touch "{marker}"\n')
+        (bin_dir / 'codex').chmod(0o755)
+        log = self.home / '.cache/org-features/codex-update.log'
+        self.hook('codex', 'poststart')
+        self.assertFalse(log.exists())
+        self.env['ORG_FEATURES_AUTO_UPDATE'] = 'true'
+        self.hook('codex', 'poststart')
+        # The hook returns before the updater finishes.
+        self.assertFalse(marker.exists())
+        for _ in range(100):
+            if marker.exists():
+                break
+            time.sleep(0.1)
+        self.assertTrue(marker.exists())
+
+    def test_grok_update_prunes_unused_downloads(self):
+        self.hook('grok')
+        bin_dir = self.home / '.local/bin'
+        bin_dir.mkdir(parents=True)
+        (bin_dir / 'grok').write_text('#!/bin/bash\nexit 0\n')
+        (bin_dir / 'grok').chmod(0o755)
+        downloads = self.home / '.grok/downloads'
+        downloads.mkdir()
+        for name in ['grok-linux-x86_64', 'grok-1.0.50-linux-x86_64']:
+            (downloads / name).write_text(name)
+        for link in ['grok', 'agent']:
+            path = self.home / '.grok/bin' / link
+            path.unlink(missing_ok=True)
+            path.symlink_to('../downloads/grok-1.0.50-linux-x86_64')
+        self.hook('grok', 'self-update')
+        self.assertEqual([p.name for p in downloads.iterdir()], ['grok-1.0.50-linux-x86_64'])
+
+    def test_codex_update_prunes_unused_releases(self):
+        self.codex_package(self.home / '.codex', '1.2.3')
+        self.hook('codex')
+        releases = self.home / '.data/codex/packages/standalone/releases'
+        for version in ['1.2.2', '1.2.1']:
+            (releases / version / 'bin').mkdir(parents=True)
+        # A session started from 1.2.1 before the update keeps that release.
+        running = releases / '1.2.1/bin/codex'
+        shutil.copy(shutil.which('sleep'), running)
+        process = subprocess.Popen([str(running), '30'])
+        self.addCleanup(process.wait)
+        self.addCleanup(process.kill)
+        (self.home / '.local/bin/codex').unlink()
+        (self.home / '.local/bin/codex').write_text('#!/bin/bash\nexit 0\n')
+        (self.home / '.local/bin/codex').chmod(0o755)
+        # History and other user data outside releases/ survive, even behind a link.
+        saved = self.home / '.data/codex'
+        user_files = [saved / 'history.jsonl', saved / 'sessions/2026/rollout.jsonl', saved / 'state_5.sqlite']
+        for path in user_files:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('keep')
+        (releases / 'linked').symlink_to(saved / 'sessions')
+        self.hook('codex', 'self-update')
+        self.assertEqual(sorted(p.name for p in releases.iterdir()), ['1.2.1', '1.2.3', 'linked'])
+        for path in user_files:
+            self.assertEqual(path.read_text(), 'keep', path)
 
     def test_shell_history_seeds_volume_once(self):
         (self.home / '.zsh_history').write_text(': 1:0;from-image\n')

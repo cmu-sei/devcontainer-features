@@ -1,6 +1,10 @@
 # Herdr
 
-Installs the pinned Herdr terminal workspace manager with verified release checksums (0.9.1).
+Installs the latest Herdr terminal workspace manager via the official installer script,
+which verifies the release checksum. Each agent gets the Herdr skill from `herdr --skill`,
+so it matches the installed release.
+Each container start runs `herdr update` in the background; see
+[Versions and updates](../../README.md#versions-and-updates).
 
 ```json
 {

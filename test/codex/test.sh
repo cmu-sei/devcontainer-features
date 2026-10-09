@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 export PATH="$HOME/.local/bin:$PATH"
-expected=$(jq -r '.options.version.default' /usr/local/share/org-features/codex/devcontainer-feature.json)
-codex --version | grep -F "$expected"
+expected="$(codex --version)"
 bash /usr/local/share/org-features/codex/postcreate.sh
-codex --version | grep -F "$expected"
+# Create keeps the image's release.
+[ "$(codex --version)" = "$expected" ]
 resolved="$(readlink -f "$(command -v codex)")"
 [[ "$resolved" == "$(readlink -f "$HOME/.codex")/packages/standalone/releases/"* ]]
 

@@ -115,7 +115,7 @@ Nothing is written to a project-level `.claude/settings.json`; if you create one
 
 ### Pinned models
 
-Which Bedrock model each of `opus`/`sonnet`/`haiku` resolves to is defined per profile in `.devcontainer/profiles/<profile>/claude.json`, alongside the equivalent files for the other agents (`litellm.json`, `opencode.json`, `models.json`, `config.toml`, `grok.toml`). On every container create, `postcreate.sh` merges the configured profiles' entries into the `env` block of the **user-level** `~/.claude/settings.json`; the `/model` picker is left stock, so every family listed there — Fable included — is offered. Because the fragment is tracked in git and re-read on every create, a model bump reaches you on your next rebuild after a `git pull`. LiteLLM, OpenCode, and Pi offer the same three families (Fable 5.1, Opus 5.5, Sonnet 5) in both Bedrock profiles; OpenCode gets the commercial models from its built-in catalog, while the other entries come from the sibling files in each profile directory. They also offer xAI's Grok 4.6 where supported, which is the model behind the Grok CLI (see below); Pi's picker shows only the profile's listed models, so Haiku is not offered there.
+Under the `aws` profile Claude Code is not pinned: its `claude.json` is empty, and each `/model` tier resolves to Claude Code's built-in Bedrock default, which moves to newer models as Claude Code updates (see the claude feature's README). GovCloud keeps its pins, because its lineup trails commercial Bedrock: which model each of `opus`/`sonnet`/`haiku` resolves to under `awsgov` is defined in `.devcontainer/profiles/awsgov/claude.json`, alongside the equivalent files for the other agents (`litellm.json`, `opencode.json`, `models.json`, `config.toml`, `grok.toml`). On every container create, `postcreate.sh` merges the configured profiles' entries into the `env` block of the **user-level** `~/.claude/settings.json`; the `/model` picker is left stock, so every family listed there — Fable included — is offered. Because the fragment is tracked in git and re-read on every create, a model bump reaches you on your next rebuild after a `git pull`. LiteLLM, OpenCode, and Pi offer the same three families (Fable 5.1, Opus 5.5, Sonnet 5) in both Bedrock profiles; OpenCode gets the commercial models from its built-in catalog, while the other entries come from the sibling files in each profile directory. They also offer xAI's Grok 4.6 where supported, which is the model behind the Grok CLI (see below); Pi's picker shows only the profile's listed models, so Haiku is not offered there.
 
 ### Grok CLI
 
@@ -157,11 +157,12 @@ Pi and OpenCode offer `amazon-bedrock/us.openai.gpt-6-sol` and
 `amazon-bedrock/us.openai.gpt-6-luna` through Bedrock Converse. The optional chat
 stack offers `aws/gpt-6-sol` and `aws/gpt-6-luna` through Mantle in `us-east-1`,
 with low reasoning effort by default and per-chat overrides supported.
-Pi 0.87.0 uses the models' default reasoning on this route; its thinking selector
+As of 0.87.0, Pi uses the models' default reasoning on this route; its thinking selector
 does not send an OpenAI reasoning-effort override.
 
-Codex is pinned to **0.159.2**. Native GPT-6.1 Sol entries were added to the
-Bedrock Runtime and Mantle catalogs in 0.159.1. The container generates its picker
+Codex installs its latest release. Native GPT-6.1 Sol entries were added to the
+Bedrock Runtime and Mantle catalogs in 0.159.1, so a pinned `version` must be at least
+that. The container generates its picker
 from the installed CLI and removes `global.*` entries, preserving the US-only
 `us.openai.gpt-6.1-sol` entry and its upstream metadata. No predecessor templates
 are needed. GPT-6.1 Sol is also served by Mantle in `us-east-1` as
