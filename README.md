@@ -198,27 +198,39 @@ Runtime assets are installed under `/usr/local/share/org-features/<id>`. State i
 Reusing a volume preserves credentials and sessions. Grok and Codex executable payloads
 are kept outside that persisted state so image upgrades are not hidden by old binaries.
 Herdr integrations run at post-start, after every feature finishes initializing state.
-The Herdr skill is bundled from release 0.9.1 with its upstream license and installed
-for detected agents at post-start.
+The Herdr skill comes from the installed binary (`herdr --skill`) and is installed for
+detected agents at post-start.
 
 Bedrock performs read-only checks. Account administrators must configure retention
 settings and model entitlements before use.
 
 ## Versions and updates
 
-Feature package versions start at `1.0.0`. Claude, Codex, Grok, OpenCode, Pi,
-Oh My Logo, and Playwright expose a tool `version` option with a pinned default.
-Herdr and the AWS Session Manager plugin use checked-in release manifests and
-checksums, Pure is pinned to a commit, and Chat pins its bundle dependencies.
+Feature package versions start at `1.0.0`. The agent CLIs (Claude, Codex, Grok, OpenCode,
+and Pi) release too often to pin usefully, so their installers run without a version:
+each image build installs the newest release. Set the `version` option to pin an exact release.
+Herdr likewise installs its latest release through its official installer, which has no
+version option.
+Oh My Logo and Playwright expose a tool `version` option with a pinned default.
+The AWS Session Manager plugin uses a checked-in release manifest and checksums, Pure is
+pinned to a commit, and Chat pins its bundle dependencies.
 Installers run during image builds.
-Claude Code keeps its automatic updater, so it updates itself past the pinned version.
+
+Each container start then runs those six tools' own updaters (`claude update`,
+`codex update`, `grok update`, `opencode upgrade`, `pi update`, `herdr update`) in the
+background, so the start does not wait on downloads and the tools update in parallel.
+An update takes effect the next time the tool launches. Output goes to
+`~/.cache/org-features/<feature>-update.log`. A feature with a pinned `version` skips
+its update; set `ORG_FEATURES_AUTO_UPDATE=false` in the container environment to skip
+all of them. Claude Code also keeps its own automatic updater.
 
 To release an update:
 
 1. Change the tool pin, packaged script, or defaults and bump that feature's metadata
    `version`. Published exact feature versions are never rebuilt; the test workflow
    fails a pull request that changes a package without bumping it. A change to `tools/lib/`
-   is copied into every package and requires a version bump for each.
+   is copied into every package that ships it (`update.sh` only goes to the agent
+   features) and requires a version bump for each.
 2. Merge a pull request to `main`. The **Release** workflow reruns the tests, publishes
    bumped features, and releases the bundle with the largest feature bump since the
    latest `v*` tag. An added feature is minor, a removed one major, and a bundle or
@@ -229,7 +241,7 @@ To release an update:
 
 The registry tag (`:1`, `:1.0.0`) selects the feature package. The `version` option
 inside a feature entry selects the installed tool. Leave options empty to use the
-release's default tool version.
+release's default tool version (the latest release for the agent CLIs).
 
 Pinning top-level tool releases does not lock every transitive npm/Python dependency or
 remote installer script. For byte-for-byte reproduction, also pin the base image digest,

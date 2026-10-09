@@ -16,7 +16,8 @@ org_prepare_data
 mkdir -p "$DATA/$TARGET"
 
 # --- Symlink agent data directories into the persistent volume ---
-# Persist state, then point the legacy executable location at the image version.
+# Persist state, then point the legacy executable location at the image version, which
+# ~/.local/bin/grok follows; `grok update` later repoints it at a newer download.
 vol_dir="$DATA/$TARGET"
 home_dir="$HOME/.$TARGET"
 if [ -d "$home_dir" ] && [ ! -L "$home_dir" ]; then

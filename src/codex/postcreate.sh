@@ -25,7 +25,7 @@ if [ -d "$home_dir" ] && [ ! -L "$home_dir" ]; then
         cp -a "$home_dir/." "$vol_dir/"
     fi
     # Codex only detects its updater when packages live under the real ~/.codex, so
-    # the image's pinned release replaces any saved one (also drops old releases).
+    # the image's release replaces any saved one (also drops old releases).
     if [ -d "$home_dir/packages/standalone" ]; then
         rm -rf "$vol_dir/packages/standalone"
         mkdir -p "$vol_dir/packages"

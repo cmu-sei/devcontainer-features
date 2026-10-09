@@ -157,11 +157,12 @@ Pi and OpenCode offer `amazon-bedrock/us.openai.gpt-6-sol` and
 `amazon-bedrock/us.openai.gpt-6-luna` through Bedrock Converse. The optional chat
 stack offers `aws/gpt-6-sol` and `aws/gpt-6-luna` through Mantle in `us-east-1`,
 with low reasoning effort by default and per-chat overrides supported.
-Pi 0.87.0 uses the models' default reasoning on this route; its thinking selector
+As of 0.87.0, Pi uses the models' default reasoning on this route; its thinking selector
 does not send an OpenAI reasoning-effort override.
 
-Codex is pinned to **0.159.2**. Native GPT-6.1 Sol entries were added to the
-Bedrock Runtime and Mantle catalogs in 0.159.1. The container generates its picker
+Codex installs its latest release. Native GPT-6.1 Sol entries were added to the
+Bedrock Runtime and Mantle catalogs in 0.159.1, so a pinned `version` must be at least
+that. The container generates its picker
 from the installed CLI and removes `global.*` entries, preserving the US-only
 `us.openai.gpt-6.1-sol` entry and its upstream metadata. No predecessor templates
 are needed. GPT-6.1 Sol is also served by Mantle in `us-east-1` as

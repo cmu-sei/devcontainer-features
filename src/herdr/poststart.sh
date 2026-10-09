@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/org-runtime.sh"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$(dirname "${BASH_SOURCE[0]}")/org-update.sh"
 
 # All features have finished migrating persistent state before this phase.
 for agent in claude codex opencode pi grok; do
@@ -21,5 +21,9 @@ for agent in claude codex opencode pi grok; do
         *) SKILL_DIR="$HOME/.agents/skills/herdr" ;;
     esac
     mkdir -p "$SKILL_DIR"
-    install -m 644 "$SCRIPT_DIR/herdr-skill.md" "$SKILL_DIR/SKILL.md"
+    # The binary prints the skill matching its own release, so this follows `herdr update`.
+    herdr --skill > "$SKILL_DIR/SKILL.md.tmp" && mv "$SKILL_DIR/SKILL.md.tmp" "$SKILL_DIR/SKILL.md" || rm -f "$SKILL_DIR/SKILL.md.tmp"
 done
+
+# Skills above come from the running binary; an update reaches them on the next start.
+org_update_in_background herdr herdr update

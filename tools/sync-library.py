@@ -4,9 +4,12 @@ import pathlib
 import sys
 
 root = pathlib.Path(__file__).resolve().parents[1]
+# update.sh only ships with the features whose tools update themselves at container start.
+AGENT_FEATURES = {"claude", "codex", "grok", "herdr", "opencode", "pi"}
 stale = []
 for feature in sorted((root / "src").iterdir()):
-    for name in ("build.sh", "runtime.sh"):
+    names = ["build.sh", "runtime.sh"] + (["update.sh"] if feature.name in AGENT_FEATURES else [])
+    for name in names:
         source = root / "tools/lib" / name
         target = feature / ("org-" + name)
         if "--check" in sys.argv:

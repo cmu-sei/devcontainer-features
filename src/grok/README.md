@@ -12,6 +12,9 @@ Installs xAI's Grok CLI (Grok Build) via the official installer script, plus the
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `version` | `1.0.40` | Exact upstream tool version installed at image build time. |
+| `version` | empty | Exact upstream tool version to pin at image build time. Leave empty to install the latest release. |
+
+Each container start runs `grok update` in the background unless `version` pins a release;
+see [Versions and updates](../../README.md#versions-and-updates).
 
 See the [collection README](../../README.md) for the supported base, profiles, persistence, and release process.

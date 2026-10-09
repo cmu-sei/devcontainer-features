@@ -12,7 +12,10 @@ Installs the Claude Code CLI via the official installer script.
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `version` | `2.1.292` | Upstream tool version installed at image build time. Claude Code's auto-updater stays enabled, so it updates itself from there. |
+| `version` | empty | Exact upstream tool version to pin at image build time. Leave empty to install the latest release. |
+
+Each container start runs `claude update` in the background unless `version` pins a release;
+see [Versions and updates](../../README.md#versions-and-updates).
 | `bedrock` | `false` | Use Amazon Bedrock. Writes `CLAUDE_CODE_USE_BEDROCK=1` into `~/.claude/settings.json` `env`. Bedrock still needs `AWS_REGION` and credentials from the container. |
 
 ## Bedrock model pins

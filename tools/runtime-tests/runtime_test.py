@@ -5,6 +5,7 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 
 ASSETS = pathlib.Path('/usr/local/share/org-features')
@@ -20,7 +21,7 @@ class RuntimeTests(unittest.TestCase):
         self.home.mkdir()
         self.workspace.mkdir()
         self.profiles.mkdir(parents=True)
-        self.env = dict(os.environ, HOME=str(self.home), ORG_DEVCONTAINER_DIR=str(self.config), CONFIGURED_PROFILES='', CHAT_AUTOSTART='0',
+        self.env = dict(os.environ, HOME=str(self.home), ORG_DEVCONTAINER_DIR=str(self.config), CONFIGURED_PROFILES='', CHAT_AUTOSTART='0', ORG_FEATURES_AUTO_UPDATE='false',
                         SHELL_COMPLETIONS_PREFIX=str(self.root / 'completions'))
         self.addCleanup(self.temp.cleanup)
 
@@ -179,7 +180,7 @@ class RuntimeTests(unittest.TestCase):
         result = self.hook('bedrock')
         self.assertIn('(unchanged)', result.stdout)
 
-    def test_herdr_skill_uses_bundled_release(self):
+    def test_herdr_skill_comes_from_installed_binary(self):
         self.hook('herdr')
         self.hook('claude')
         bin_dir = self.home / '.local/bin'
@@ -188,10 +189,30 @@ class RuntimeTests(unittest.TestCase):
             binary = bin_dir / name
             binary.write_text('#!/bin/bash\nexit 0\n')
             binary.chmod(0o755)
+        (bin_dir / 'herdr').write_text('#!/bin/bash\n[ "$1" = --skill ] && echo "herdr skill"\nexit 0\n')
         self.hook('herdr', 'poststart')
-        expected = (ASSETS / 'herdr/herdr-skill.md').read_text()
+        expected = 'herdr skill\n'
         self.assertEqual((self.home / '.claude/skills/herdr/SKILL.md').read_text(), expected)
         self.assertEqual((self.home / '.agents/skills/herdr/SKILL.md').read_text(), expected)
+
+    def test_poststart_updates_in_background(self):
+        bin_dir = self.home / '.local/bin'
+        bin_dir.mkdir(parents=True)
+        marker = self.root / 'updated'
+        (bin_dir / 'codex').write_text(f'#!/bin/bash\n[ "$*" = update ] && sleep 1 && touch "{marker}"\n')
+        (bin_dir / 'codex').chmod(0o755)
+        log = self.home / '.cache/org-features/codex-update.log'
+        self.hook('codex', 'poststart')
+        self.assertFalse(log.exists())
+        self.env['ORG_FEATURES_AUTO_UPDATE'] = 'true'
+        self.hook('codex', 'poststart')
+        # The hook returns before the updater finishes.
+        self.assertFalse(marker.exists())
+        for _ in range(100):
+            if marker.exists():
+                break
+            time.sleep(0.1)
+        self.assertTrue(marker.exists())
 
     def test_shell_history_seeds_volume_once(self):
         (self.home / '.zsh_history').write_text(': 1:0;from-image\n')
