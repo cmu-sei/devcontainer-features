@@ -1,6 +1,6 @@
 # spawn.ps1 - Download the latest released dev container bundle into a project
 #
-# Usage: .\spawn.ps1 [<target-directory>] [-Git] [-Version <tag>] [-Chat]
+# Usage: .\spawn.ps1 [<target-directory>] [-Git] [-Version <tag>] [-Chat] [-Certs <dir>]
 #    or: & ([scriptblock]::Create((irm <releases>/latest/download/spawn.ps1))) [<target-directory>] [options]
 
 param(
@@ -12,13 +12,22 @@ param(
 
     [string]$Version,
 
-    [switch]$Chat
+    [switch]$Chat,
+
+    [string]$Certs
 )
 
 # Release assets built by .github/workflows/release.yml. The zip unpacks to a
 # top-level .devcontainer\; releases/latest/download always serves the newest release.
 $ReleasesUrl = "https://github.com/cmu-sei/devcontainer-features/releases"
 $Asset = "devcontainer.zip"
+
+# Root CAs copied into every spawned project's .devcontainer\certs\ (see "Certificates"
+# below). The same folder spawn.sh uses. Named for this tool, not a generic certs folder:
+# every *.crt found is trusted as a ROOT in the container, so it must hold nothing but the
+# roots meant for it.
+$ConfigHome = if ($env:XDG_CONFIG_HOME) { $env:XDG_CONFIG_HOME } else { Join-Path $HOME ".config" }
+$CertsDefault = Join-Path $ConfigHome "devcontainer-certs"
 
 # Every failure path stops through Stop-Spawn rather than `exit`. Run as a script block (the
 # download-and-run one-liner above) `exit` would close the user's PowerShell session, so the
@@ -42,7 +51,7 @@ try {
     }
 
     if ([string]::IsNullOrEmpty($TargetDir)) {
-        Write-Host "Usage: spawn.ps1 [<target-directory>] [-Git] [-Version <tag>] [-Chat]"
+        Write-Host "Usage: spawn.ps1 [<target-directory>] [-Git] [-Version <tag>] [-Chat] [-Certs <dir>]"
         Write-Host "   or: & ([scriptblock]::Create((irm $ReleasesUrl/latest/download/spawn.ps1))) [<target-directory>] [options]"
         Write-Host ""
         Write-Host "Downloads the latest released dev container bundle, then runs its setup to pick the"
@@ -62,7 +71,20 @@ try {
         Write-Host "  -Chat               Preselect the browser-chat stack (LiteLLM, Open WebUI, Open Terminal,"
         Write-Host "                      SearXNG, supervisord) in the feature prompt. Off by default for a"
         Write-Host "                      leaner, faster build"
+        Write-Host "  -Certs <dir>        Copy the root CA certificates (*.crt) in <dir> into the project's"
+        Write-Host "                      .devcontainer\certs\, to be trusted in the container"
+        Write-Host "                      (default: $CertsDefault, when it exists)"
         Stop-Spawn
+    }
+
+    # A folder named on the command line has to exist; the default is optional.
+    if (-not [string]::IsNullOrEmpty($Certs)) {
+        if (-not (Test-Path $Certs -PathType Container)) {
+            Write-Host "Error: certificate folder '$Certs' does not exist."
+            Stop-Spawn
+        }
+    } elseif (Test-Path $CertsDefault -PathType Container) {
+        $Certs = $CertsDefault
     }
 
     if (-not [string]::IsNullOrEmpty($Version)) {
@@ -231,6 +253,33 @@ try {
         # Nothing to strip for .devcontainer\devcontainer-lock.json: it is a build output the
         # Dev Containers CLI regenerates, and the release is built from tracked files only,
         # where it is gitignored. Each spawned project owns its own lockfile.
+
+        # --- Certificates ---
+        # The machine's root CAs (a TLS-inspecting proxy's, typically) go into the staged
+        # .devcontainer\certs\, which the Dockerfile copies into the image for the
+        # custom-certs feature to trust before any other feature downloads anything. Copied,
+        # not linked: the image build only sees the project. Only *.crt, the one extension
+        # update-ca-certificates reads. In adoption they travel with .devcontainer\.
+        if (-not [string]::IsNullOrEmpty($Certs)) {
+            # The Extension test because on Windows -Filter "*.crt" also matches "*.crtx".
+            $CertFiles = @(Get-ChildItem -LiteralPath $Certs -Filter "*.crt" -File -Force |
+                Where-Object { $_.Extension -eq ".crt" })
+            if ($CertFiles.Count -eq 0) {
+                Write-Host "No *.crt files in '$Certs'; no certificates added."
+            } else {
+                try {
+                    $CertsDest = Join-Path $Payload ".devcontainer/certs"
+                    New-Item -ItemType Directory -Path $CertsDest -Force -ErrorAction Stop | Out-Null
+                    foreach ($CertFile in $CertFiles) {
+                        Copy-Item -LiteralPath $CertFile.FullName $CertsDest -ErrorAction Stop
+                    }
+                } catch {
+                    Write-Host "Failed to copy certificates from '$Certs'."
+                    Stop-Spawn
+                }
+                Write-Host "Added $($CertFiles.Count) certificate(s) from '$Certs' to .devcontainer\certs\."
+            }
+        }
 
         # --- Profile, feature, CUI and credential selection (pre-container) ---
         # Hand off to the project's own setup script rather than duplicating any of it here:

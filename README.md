@@ -96,8 +96,15 @@ finishes, so a cancelled or failed spawn leaves the target unchanged.
 | `--version <tag>` / `-Version <tag>` | Use a specific bundle release, e.g. `v1.2.3`, instead of the latest. |
 | `--chat` / `-Chat` | Preselect the browser-chat stack in the feature prompt. |
 | `--git`, `-g` / `-Git`, `-g` | Preselect "yes" for initializing a Git repository. |
+| `--certs <dir>` / `-Certs <dir>` | Copy the root CAs (`*.crt`) in `<dir>` into `.devcontainer/certs/`. Default: `~/.config/devcontainer-certs` (or `$XDG_CONFIG_HOME/devcontainer-certs`), when it exists. |
 
-> NOTE: If internal CA certificates are needed, copy them into the the new .devcontainer/certs
+If you work behind a TLS-inspecting proxy such as Zscaler, put its root CA in
+`~/.config/devcontainer-certs/` once and every spawned project trusts it, including
+during the image build (see [custom-certs](src/custom-certs/README.md)). Keep only
+root CAs there: each `.crt` becomes a trusted root in the container.
+
+> NOTE: If internal CA certificates are needed, and they weren't available
+> in the --certs directory above, manually copy them into the the new .devcontainer/certs
 > folder before building the container.
 
 Open the project in VS Code to build the container; the build asks nothing further.
