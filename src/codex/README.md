@@ -16,6 +16,8 @@ Installs the OpenAI Codex CLI via the official installer script.
 
 Each container start runs `codex update` in the background unless `version` pins a release;
 see [Versions and updates](../../README.md#versions-and-updates).
+After updating, it deletes installed Codex releases that neither `current` nor a running
+`codex` uses, so old releases do not pile up on the persisted volume.
 
 The bundled commercial `aws` profile defaults to GPT-6.1 Sol
 (`us.openai.gpt-6.1-sol`) through Bedrock Runtime in `us-east-1`. Codex 0.159.1

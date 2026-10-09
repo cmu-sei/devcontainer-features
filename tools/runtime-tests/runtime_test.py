@@ -221,6 +221,33 @@ class RuntimeTests(unittest.TestCase):
         self.hook('grok', 'self-update')
         self.assertEqual([p.name for p in downloads.iterdir()], ['grok-1.0.50-linux-x86_64'])
 
+    def test_codex_update_prunes_unused_releases(self):
+        self.codex_package(self.home / '.codex', '1.2.3')
+        self.hook('codex')
+        releases = self.home / '.data/codex/packages/standalone/releases'
+        for version in ['1.2.2', '1.2.1']:
+            (releases / version / 'bin').mkdir(parents=True)
+        # A session started from 1.2.1 before the update keeps that release.
+        running = releases / '1.2.1/bin/codex'
+        shutil.copy(shutil.which('sleep'), running)
+        process = subprocess.Popen([str(running), '30'])
+        self.addCleanup(process.wait)
+        self.addCleanup(process.kill)
+        (self.home / '.local/bin/codex').unlink()
+        (self.home / '.local/bin/codex').write_text('#!/bin/bash\nexit 0\n')
+        (self.home / '.local/bin/codex').chmod(0o755)
+        # History and other user data outside releases/ survive, even behind a link.
+        saved = self.home / '.data/codex'
+        user_files = [saved / 'history.jsonl', saved / 'sessions/2026/rollout.jsonl', saved / 'state_5.sqlite']
+        for path in user_files:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('keep')
+        (releases / 'linked').symlink_to(saved / 'sessions')
+        self.hook('codex', 'self-update')
+        self.assertEqual(sorted(p.name for p in releases.iterdir()), ['1.2.1', '1.2.3', 'linked'])
+        for path in user_files:
+            self.assertEqual(path.read_text(), 'keep', path)
+
     def test_shell_history_seeds_volume_once(self):
         (self.home / '.zsh_history').write_text(': 1:0;from-image\n')
         self.hook('shell-history')
