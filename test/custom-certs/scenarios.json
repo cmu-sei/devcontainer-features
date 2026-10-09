@@ -1,0 +1,11 @@
+{
+    "with_certs": {
+        "image": "mcr.microsoft.com/devcontainers/python:3.14-trixie",
+        "remoteUser": "vscode",
+        "features": {
+            "custom-certs": {
+                "folder": "/usr/share/ca-certificates/mozilla"
+            }
+        }
+    }
+}

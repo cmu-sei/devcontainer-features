@@ -19,7 +19,7 @@
         "ghcr.io/devcontainers-extra/features/uv:1": {},
         "ghcr.io/devcontainers-extra/features/ripgrep:1": {},
         "ghcr.io/jsburckhardt/devcontainer-features/fd:1": {},
-        "ghcr.io/cmu-sei/devcontainer-features/sei-certs:1": {},
+        "ghcr.io/cmu-sei/devcontainer-features/custom-certs:1": {},
         "ghcr.io/cmu-sei/devcontainer-features/bedrock:1": {},
         "ghcr.io/cmu-sei/devcontainer-features/chat:1": {},
         "ghcr.io/cmu-sei/devcontainer-features/claude:1": {},
@@ -34,7 +34,7 @@
         "ghcr.io/cmu-sei/devcontainer-features/tmux:1": {}
     },
     "overrideFeatureInstallOrder": [
-        "ghcr.io/cmu-sei/devcontainer-features/sei-certs"
+        "ghcr.io/cmu-sei/devcontainer-features/custom-certs"
     ],
     "remoteEnv": {
         "LANG": "C.UTF-8",

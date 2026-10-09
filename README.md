@@ -25,7 +25,7 @@ Registry (GHCR) before using the registry references in the examples.
 | [pi](src/pi/README.md) | Pi Coding Agent with profile-based configuration and persistent user state. |
 | [playwright](src/playwright/README.md) | Playwright CLI, browser OS packages and cache, Chromium CA trust, and an optional headed-browser desktop. |
 | [pure-prompt](src/pure-prompt/README.md) | Pure Zsh prompt and workspace Git dirty indicator. |
-| [sei-certs](src/sei-certs/README.md) | SEI and Zscaler root CAs in the system trust store. |
+| [custom-certs](src/custom-certs/README.md) | Your root CAs (e.g. Zscaler's) in the system trust store; none are bundled. |
 | [shell-completions](src/shell-completions/README.md) | zsh, bash, and fish completions for CLIs installed by other features. |
 | [shell-history](src/shell-history/README.md) | Shell and REPL history on the persistent volume, written per command. |
 | [tmux](src/tmux/README.md) | tmux with the organization's terminal defaults. |
@@ -52,10 +52,13 @@ Other bases need equivalent prerequisites and are not covered by the integration
 
 CA certificates must be trusted before any feature downloads software. Feature
 declaration order does not control installation order: Node and uv dependencies can
-download software before a certificate feature runs. Either list
-`ghcr.io/cmu-sei/devcontainer-features/sei-certs` first in
-`overrideFeatureInstallOrder` (see [sei-certs](src/sei-certs/README.md)), or install
-the certificates in the base Dockerfile with `COPY` and `update-ca-certificates`.
+download software before a certificate feature runs. Feature installers cannot read the
+project, so the base Dockerfile copies the certificates into the image. Either let
+[custom-certs](src/custom-certs/README.md) trust them, listing
+`ghcr.io/cmu-sei/devcontainer-features/custom-certs` first in
+`overrideFeatureInstallOrder`, or run `update-ca-certificates` in the Dockerfile
+yourself. A spawned project does the former: put the `.crt` files in
+`.devcontainer/certs/`.
 
 ## Usage
 
@@ -93,6 +96,9 @@ finishes, so a cancelled or failed spawn leaves the target unchanged.
 | `--version <tag>` / `-Version <tag>` | Use a specific bundle release, e.g. `v1.2.3`, instead of the latest. |
 | `--chat` / `-Chat` | Preselect the browser-chat stack in the feature prompt. |
 | `--git`, `-g` / `-Git`, `-g` | Preselect "yes" for initializing a Git repository. |
+
+> NOTE: If internal CA certificates are needed, copy them into the the new .devcontainer/certs
+> folder before building the container.
 
 Open the project in VS Code to build the container; the build asks nothing further.
 See the bundle's [README](bundle/README.md) for its services and maintenance scripts.
@@ -135,7 +141,7 @@ Feature lifecycle hooks run automatically. Remove project hooks that duplicate t
 setup or automatically update installed tools; retain unrelated project hooks.
 
 [examples/base/devcontainer.json](examples/base/devcontainer.json) selects every
-feature except `sei-certs` and uses the public Python base without profiles or an
+feature except `custom-certs` and uses the public Python base without profiles or an
 environment file.
 Adapt its image or build configuration if the deployment requires CA certificates.
 

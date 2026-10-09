@@ -48,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        feature: [aws-session-manager-plugin, bedrock, chat, claude, codex, grok, herdr, oh-my-logo, opencode, pi, playwright, pure-prompt, sei-certs, shell-completions, shell-history, tmux]
+        feature: [aws-session-manager-plugin, bedrock, chat, claude, codex, grok, herdr, oh-my-logo, opencode, pi, playwright, pure-prompt, custom-certs, shell-completions, shell-history, tmux]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

@@ -1,0 +1,19 @@
+{
+    "id": "custom-certs",
+    "version": "1.0.0",
+    "name": "Custom Certificates",
+    "description": "Installs every CA certificate (*.crt) found in a folder inside the image into the system trust store, and points Node, Python requests, pip and OpenSSL at it",
+    "options": {
+        "folder": {
+            "type": "string",
+            "default": "/usr/local/share/custom-certs",
+            "description": "Folder inside the image holding the *.crt files, typically copied there by the base Dockerfile. The project folder is not available during the image build."
+        }
+    },
+    "containerEnv": {
+        "NODE_EXTRA_CA_CERTS": "/etc/ssl/certs/ca-certificates.crt",
+        "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",
+        "PIP_CERT": "/etc/ssl/certs/ca-certificates.crt",
+        "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt"
+    }
+}
