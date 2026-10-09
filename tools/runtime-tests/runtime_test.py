@@ -54,22 +54,6 @@ class RuntimeTests(unittest.TestCase):
         settings = json.loads((self.home / '.claude/settings.json').read_text())
         self.assertEqual(settings['env']['MODEL'], 'two')
 
-    def test_claude_bedrock_model_pins(self):
-        self.hook('claude')
-        settings = json.loads((self.home / '.claude/settings.json').read_text())
-        self.assertNotIn('ANTHROPIC_DEFAULT_OPUS_MODEL', settings.get('env', {}))
-        self.env.update(CLAUDE_CODE_USE_BEDROCK='1', ANTHROPIC_DEFAULT_HAIKU_MODEL='from-container',
-                        CONFIGURED_PROFILES='aws')
-        folder = self.profiles / 'aws'
-        folder.mkdir()
-        (folder / 'claude.json').write_text(json.dumps({'env': {'ANTHROPIC_DEFAULT_SONNET_MODEL': 'from-profile'}}))
-        self.hook('claude')
-        env = json.loads((self.home / '.claude/settings.json').read_text())['env']
-        self.assertEqual(env['ANTHROPIC_DEFAULT_OPUS_MODEL'], 'us.anthropic.claude-opus-5-5')
-        self.assertEqual(env['ANTHROPIC_DEFAULT_SONNET_MODEL'], 'from-profile')
-        self.assertNotIn('ANTHROPIC_DEFAULT_HAIKU_MODEL', env)
-        self.assertNotIn('CLAUDE_CODE_USE_BEDROCK', env)
-
     def test_claude_bedrock_option(self):
         # The option leaves a build-time marker in the installed assets; use a copy.
         assets = self.root / 'claude-assets'
@@ -78,7 +62,13 @@ class RuntimeTests(unittest.TestCase):
         subprocess.run(['bash', str(assets / 'postcreate.sh')], cwd=self.workspace, env=self.env, check=True)
         env = json.loads((self.home / '.claude/settings.json').read_text())['env']
         self.assertEqual(env['CLAUDE_CODE_USE_BEDROCK'], '1')
-        self.assertEqual(env['ANTHROPIC_DEFAULT_OPUS_MODEL'], 'us.anthropic.claude-opus-5-5')
+        self.assertNotIn('ANTHROPIC_DEFAULT_OPUS_MODEL', env)
+        # A value in the container environment wins over the option.
+        self.env['CLAUDE_CODE_USE_BEDROCK'] = '0'
+        (self.home / '.claude/settings.json').write_text('{}')
+        subprocess.run(['bash', str(assets / 'postcreate.sh')], cwd=self.workspace, env=self.env, check=True)
+        env = json.loads((self.home / '.claude/settings.json').read_text()).get('env', {})
+        self.assertNotIn('CLAUDE_CODE_USE_BEDROCK', env)
 
     def test_legacy_env_file_crlf(self):
         self.env.pop('CONFIGURED_PROFILES')
