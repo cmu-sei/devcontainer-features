@@ -1,0 +1,16 @@
+{
+    "default": {
+        "image": "mcr.microsoft.com/devcontainers/python:3.14-trixie",
+        "remoteUser": "vscode",
+        "features": {
+            "herdr": {}
+        }
+    },
+    "ubuntu": {
+        "image": "mcr.microsoft.com/devcontainers/base:noble",
+        "remoteUser": "vscode",
+        "features": {
+            "herdr": {}
+        }
+    }
+}
