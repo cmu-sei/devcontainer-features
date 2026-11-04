@@ -13,6 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: python3 tools/validate.py
+      - name: ShellCheck the shell scripts
+        run: tools/shellcheck.sh
       # features publish does not check metadata against the schema; devcontainers/action did.
       - name: Validate feature metadata against the Dev Container Feature schema
         run: |

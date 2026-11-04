@@ -1,6 +1,6 @@
 {
     "id": "codex",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "name": "Codex CLI",
     "description": "Installs the OpenAI Codex CLI via the official installer script",
     "installsAfter": [
