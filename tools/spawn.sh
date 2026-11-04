@@ -98,6 +98,8 @@ done
 if [ -z "$TARGET_DIR" ] && (exec 3< /dev/tty) 2>/dev/null; then
     echo "Where should the project go? A new folder, or an existing project to add .devcontainer/ to."
     read -r -p "Project directory: " TARGET_DIR < /dev/tty || TARGET_DIR=""
+    # The quoted ~ is deliberate: it matches the literal ~ the user typed.
+    # shellcheck disable=SC2088
     case "$TARGET_DIR" in
         "~"|"~/"*) TARGET_DIR="$HOME${TARGET_DIR#\~}" ;;
     esac
