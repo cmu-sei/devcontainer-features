@@ -9,7 +9,7 @@ bash "$FEATURE/bundled-playwright.sh" install-deps --dry-run chromium | grep -F 
 command -v certutil
 # The create hook moved the cache onto the volume and downloaded Chromium into it.
 [ "$(readlink "$HOME/.cache/ms-playwright")" = "$HOME/.data/playwright" ]
-ls "$HOME/.data/playwright" | grep -q '^chromium-'
+[ -n "$(find "$HOME/.data/playwright" -mindepth 1 -maxdepth 1 -name 'chromium-*' -print -quit)" ]
 # The start hook imported the local CAs Chromium needs, if the base has any.
 if find /usr/local/share/ca-certificates -name '*.crt' | grep -q .; then
     certutil -L -d "sql:$HOME/.pki/nssdb" | grep -q 'C,,'
