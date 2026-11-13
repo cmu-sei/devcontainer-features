@@ -46,12 +46,14 @@ ln -sfn "$SCRIPT_DIR/statusline-command.sh" "$HOME/.local/bin/statusline"
 CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 [ -f "$CLAUDE_SETTINGS" ] || echo '{}' > "$CLAUDE_SETTINGS"
 
-# --- Defaults: commit/PR attribution and the statusline ---
+# --- Defaults: commit/PR attribution, the statusline and the Bash tool shell ---
 # Same shape as every other agent's tracked config fragment. The merge order puts the
 # EXISTING file second, so it wins at every key: this seeds, it never overwrites, and a
 # developer's own statusLine or attribution survives later creates. The statusLine
 # command is bare `statusline` — the PATH symlink made above — so moving or renaming the
 # script never invalidates a settings file already written to the volume.
+# CLAUDE_CODE_SHELL pins the Bash tool to bash when the login shell is zsh: Claude writes
+# bash, and zsh's NOMATCH globs, unsplit $VARs and 1-based arrays break those commands.
 if [ -f "$SCRIPT_DIR/default-settings.json" ]; then
     jq -s '.[0] * .[1]' "$SCRIPT_DIR/default-settings.json" "$CLAUDE_SETTINGS" \
         > "$CLAUDE_SETTINGS.tmp" && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
