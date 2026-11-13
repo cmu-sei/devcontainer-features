@@ -1,5 +1,5 @@
 # The base Python 3.14 is reused by LiteLLM, Open Terminal, SearXNG, and supervisor
-FROM mcr.microsoft.com/devcontainers/python:3.14-trixie
+FROM mcr.microsoft.com/devcontainers/python:3.15-trixie
 
 # Root CAs for a TLS-inspecting proxy (e.g. Zscaler): drop the *.crt files in
 # .devcontainer/certs/. A feature installer can't see the project, so they are copied into
