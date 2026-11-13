@@ -1,0 +1,28 @@
+version: 2
+updates:
+  # GitHub Actions used by .github/workflows, including the floating-tag
+  # cmu-sei/Crucible-Github-Actions refs (bumped only if a dotted tag appears).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # Wait before taking new releases: hijacked versions are usually caught and pulled within days.
+    cooldown:
+      default-days: 5
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: chore(deps)
+
+  # Base image of the released bundle (bundle/Dockerfile). The same image is the integration
+  # reference in test.yml, test/*/scenarios.json, examples/base and the README; move those with it.
+  - package-ecosystem: docker
+    directory: /bundle
+    schedule:
+      interval: weekly
+    # Wait before taking new releases: hijacked versions are usually caught and pulled within days.
+    cooldown:
+      default-days: 5
+    commit-message:
+      prefix: chore(deps)
