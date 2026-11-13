@@ -506,7 +506,7 @@ choose_cui() {
     fi
 
     for name in "${drop[@]}"; do
-        rm -rf "$PROFILES_DIR/$name"
+        rm -rf "${PROFILES_DIR:?}/${name:?}"
     done
 
     echo ""
@@ -762,8 +762,8 @@ choose_chat_autostart() {
 # in profile.env are filled from the collected credentials, and left EMPTY when
 # nothing was collected (the --spawning case, where the keys don't exist yet).
 write_devenv() {
-    local profile line env_file i
-    local output="CONFIGURED_PROFILES=$(IFS=,; echo "${SELECTED[*]}")"$'\n'
+    local profile line env_file i output
+    output="CONFIGURED_PROFILES=$(IFS=,; echo "${SELECTED[*]}")"$'\n'
 
     # Container behaviour rather than a credential, so it goes above the profile blocks.
     # Written only when choose_chat_autostart had something to decide (chat feature on);

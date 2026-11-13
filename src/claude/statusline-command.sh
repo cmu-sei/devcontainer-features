@@ -2,7 +2,6 @@
 input=$(cat)
 
 model=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
-model_id=$(echo "$input" | jq -r '.model.id // ""')
 
 used=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 

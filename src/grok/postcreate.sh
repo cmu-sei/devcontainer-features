@@ -5,7 +5,6 @@ set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/org-runtime.sh"
 
 TARGET=grok
-SCRIPT_DIR=$(dirname "$0")
 
 # --- Persistent data volume ---
 # A single Docker volume at ~/.data/ stores all agent data and shell history
