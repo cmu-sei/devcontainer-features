@@ -15,6 +15,12 @@ Installs the Claude Code CLI via the official installer script.
 | `version` | empty | Exact upstream tool version to pin at image build time. Leave empty to install the latest release. |
 | `bedrock` | `false` | Use Amazon Bedrock. Writes `CLAUDE_CODE_USE_BEDROCK=1` into `~/.claude/settings.json` `env`. Bedrock still needs `AWS_REGION` and credentials from the container. |
 
+Claude Code runs its Bash tool commands in bash, even when the login shell is zsh. The feature
+seeds `CLAUDE_CODE_SHELL=/bin/bash` in the `env` block of `~/.claude/settings.json`, because
+Claude writes bash and zsh handles some of it differently: unmatched globs fail, unquoted
+`$VAR` does not split, and arrays start at 1. Claude then loads `~/.bashrc` rather than
+`~/.zshrc`. A value already set in that file is kept. Set it to `/bin/zsh` to use zsh.
+
 Each container start runs `claude update` in the background unless `version` pins a release;
 see [Versions and updates](../../README.md#versions-and-updates).
 
