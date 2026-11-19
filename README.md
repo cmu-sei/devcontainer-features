@@ -281,6 +281,8 @@ and the Dev Container CLI; CI uses `@devcontainers/cli@0.87.0`.
 ```sh
 python3 tools/sync-library.py
 python3 tools/validate.py
+# ShellCheck at warning level, in the pinned image (SHELLCHECK=shellcheck uses a local binary):
+tools/shellcheck.sh
 # Offline lifecycle regression tests, with no workspace feature sources:
 docker run --rm --network none -v "$PWD:/repo:ro" \
   mcr.microsoft.com/devcontainers/python:3.14-trixie bash /repo/tools/runtime-tests/runtime.sh
